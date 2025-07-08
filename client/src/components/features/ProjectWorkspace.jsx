@@ -12,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import * as XLSX from 'xlsx';
 import { useDropzone } from 'react-dropzone';
 import { Stepper } from '../ui/stepper';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -82,6 +85,14 @@ export default function ProjectWorkspace() {
   // Real-time collaboration
   const handleDataEditCollab = useCallback((change) => setExcelData(change), []);
   const handleChartEditCollab = useCallback((chart) => {
+    if (chart.type === 'reorder' && Array.isArray(chart.order)) {
+      setCharts(prev => {
+        // Reorder charts according to the received order
+        const chartMap = Object.fromEntries(prev.map(c => [c._id, c]));
+        return chart.order.map(id => chartMap[id]).filter(Boolean);
+      });
+      return;
+    }
     setCharts(prev => {
       // Replace or add chart by id
       const idx = prev.findIndex(c => c._id === chart._id);
@@ -442,22 +453,76 @@ export default function ProjectWorkspace() {
                 <h3 className="font-semibold">Charts</h3>
                 <Button size="sm" onClick={() => setShowChartModal(true)} title="Create a new chart">+ Create Chart</Button>
               </div>
-              {charts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-4 rounded bg-muted/50 border border-dashed border-muted-foreground">
-                  <span className="text-muted-foreground text-lg font-semibold mb-2">No charts yet.</span>
-                  <Button size='xs' variant='outline' onClick={() => setShowChartModal(true)}>Create a Chart</Button>
-                </div>
-              ) : (
-                charts.map(chart => (
-                  <div key={chart._id} className="mb-4">
-                    <ChartRenderer {...chart} />
-                    <div className="flex gap-2 mt-1">
-                      <Button size="xs" variant="outline" onClick={() => handleEditChart(chart)} title="Edit this chart">Edit</Button>
-                      <Button size="xs" variant="destructive" onClick={() => handleDeleteChart(chart._id)} title="Delete this chart">Delete</Button>
-                    </div>
-                  </div>
-                ))
-              )}
+              <div id="chart-dnd-area">
+                <DragDropContext
+                  onDragEnd={(result) => {
+                    if (!result.destination) return;
+                    const reordered = Array.from(charts);
+                    const [removed] = reordered.splice(result.source.index, 1);
+                    reordered.splice(result.destination.index, 0, removed);
+                    setCharts(reordered);
+                    // Broadcast new order to collaborators
+                    sendChartEdit({ type: 'reorder', order: reordered.map(c => c._id) });
+                  }}
+                >
+                  <Droppable droppableId="charts-droppable">
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.droppableProps}>
+                        {charts.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center p-4 rounded bg-muted/50 border border-dashed border-muted-foreground">
+                            <span className="text-muted-foreground text-lg font-semibold mb-2">No charts yet.</span>
+                            <Button size='xs' variant='outline' onClick={() => setShowChartModal(true)}>Create a Chart</Button>
+                          </div>
+                        ) : (
+                          charts.map((chart, idx) => (
+                            <Draggable key={chart._id} draggableId={chart._id} index={idx}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`mb-4 ${snapshot.isDragging ? 'bg-blue-50' : ''}`}
+                                >
+                                  <ChartRenderer {...chart} />
+                                  <div className="flex gap-2 mt-1">
+                                    <Button size="xs" variant="outline" onClick={() => handleEditChart(chart)} title="Edit this chart">Edit</Button>
+                                    <Button size="xs" variant="destructive" onClick={() => handleDeleteChart(chart._id)} title="Delete this chart">Delete</Button>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        )}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              </div>
+              <div className="flex gap-2 mt-4 justify-end">
+                <Button variant="outline" onClick={async () => {
+                  const chartArea = document.getElementById('chart-dnd-area');
+                  if (!chartArea) return;
+                  const canvas = await html2canvas(chartArea);
+                  const imgData = canvas.toDataURL('image/png');
+                  const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
+                  const pageWidth = pdf.internal.pageSize.getWidth();
+                  const pageHeight = pdf.internal.pageSize.getHeight();
+                  const imgWidth = pageWidth;
+                  const imgHeight = canvas.height * (imgWidth / canvas.width);
+                  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                  pdf.save('charts.pdf');
+                }}>Export as PDF</Button>
+                <Button variant="outline" onClick={async () => {
+                  const chartArea = document.getElementById('chart-dnd-area');
+                  if (!chartArea) return;
+                  const canvas = await html2canvas(chartArea);
+                  const link = document.createElement('a');
+                  link.download = 'charts.png';
+                  link.href = canvas.toDataURL('image/png');
+                  link.click();
+                }}>Export as Image</Button>
+              </div>
             </CardContent>
           </Card>
           <Card className="mb-6">
