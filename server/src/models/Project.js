@@ -6,6 +6,7 @@ const projectSchema = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   collaborators: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   category: { type: String, trim: true },
+  teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('Project', projectSchema); 

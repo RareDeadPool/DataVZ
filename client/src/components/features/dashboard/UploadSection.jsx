@@ -24,6 +24,8 @@ import { Bar } from 'react-chartjs-2';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useRef } from 'react';
+import { useProjectCollab } from '@/hooks/useProjectCollab';
+import { useSelector } from 'react-redux';
 
 // Helper to detect numeric columns
 function isNumericColumn(data, key) {
@@ -84,6 +86,21 @@ export function UploadSection() {
   const chartContainerRef = useRef(null);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+  const user = useSelector(state => state.auth.user);
+  // Assume projectId is available (e.g., from props, context, or selected project)
+  const projectId = null; // TODO: Replace with actual project ID
+  const [presenceList, setPresenceList] = useState([]);
+  const { sendDataEdit, sendChartEdit, sendPresence } = useProjectCollab(projectId, user, {
+    onDataEdit: (change) => {
+      // Apply incoming data changes (e.g., update previewData, sheets, etc.)
+      // Example: setPreviewData(change.previewData);
+    },
+    onChartEdit: (chart) => {
+      // Handle incoming chart edits (e.g., update chart list)
+    },
+    onPresence: (presence) => setPresenceList(presence),
+  });
 
   // Compute a smart chart title for export
   let chartTitle = '';
@@ -359,6 +376,26 @@ export function UploadSection() {
     }
   };
 
+  // When Excel data is edited, broadcast the change
+  const handleDataEdit = (change) => {
+    // Apply local change
+    // ...
+    sendDataEdit(change);
+  };
+  // When a chart is created/edited, broadcast the change
+  const handleChartEdit = (chart) => {
+    // Apply local change
+    // ...
+    sendChartEdit(chart);
+  };
+  // Broadcast presence on mount
+  useEffect(() => {
+    if (projectId && user) {
+      sendPresence({ user });
+    }
+    // eslint-disable-next-line
+  }, [projectId, user]);
+
   return (
     <Card className="border-dashed border-2">
       <CardHeader className="pb-4">
@@ -366,6 +403,14 @@ export function UploadSection() {
           <FileSpreadsheet className="h-5 w-5" />
           <CardTitle>Upload Excel File</CardTitle>
         </div>
+        {presenceList.length > 0 && (
+          <div className="flex gap-2 items-center text-xs text-muted-foreground">
+            <span>Present:</span>
+            {presenceList.map((p, i) => (
+              <span key={i} className="bg-blue-100 text-blue-700 rounded px-2 py-1">{p.user?.name || 'User'}</span>
+            ))}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div

@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { BarChart3, LineChart, PieChart, ScatterChart, Upload, FileSpreadsheet } from 'lucide-react';
+import { useSocket } from '../../hooks/useSocket';
+import { useSelector } from 'react-redux';
 
 const chartTypes = [
   {
@@ -58,6 +60,13 @@ export function ChartCreationModal({ open, onOpenChange }) {
   const [creatingProject, setCreatingProject] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const user = useSelector(state => state.auth.user);
+  // Real-time collaboration: join project room and sync chartConfig
+  const { sendEdit, sendPresence } = useSocket(selectedProject, user, {
+    onEdit: (data) => setChartConfig(data),
+    onPresence: (presence) => setPresenceList(presence),
+  });
+  const [presenceList, setPresenceList] = useState([]);
 
   useEffect(() => {
     if (open) {
@@ -69,6 +78,22 @@ export function ChartCreationModal({ open, onOpenChange }) {
       fetchProjects();
     }
   }, [open]);
+
+  // Broadcast chartConfig changes
+  useEffect(() => {
+    if (selectedProject && user) {
+      sendPresence({ user });
+    }
+    // eslint-disable-next-line
+  }, [selectedProject, user]);
+
+  // When chartConfig changes, broadcast to others
+  useEffect(() => {
+    if (selectedProject && user) {
+      sendEdit(chartConfig);
+    }
+    // eslint-disable-next-line
+  }, [chartConfig]);
 
   const handleNext = () => {
     if (step < 3) setStep(step + 1)
@@ -149,7 +174,17 @@ export function ChartCreationModal({ open, onOpenChange }) {
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Chart</DialogTitle>
-          <DialogDescription>Follow the steps to create a beautiful visualization from your data</DialogDescription>
+          <DialogDescription>
+            Follow the steps to create a beautiful visualization from your data
+            {presenceList.length > 0 && (
+              <div className="flex gap-2 items-center text-xs text-muted-foreground">
+                <span>Editing now:</span>
+                {presenceList.map((p, i) => (
+                  <span key={i} className="bg-blue-100 text-blue-700 rounded px-2 py-1">{p.user?.name || 'User'}</span>
+                ))}
+              </div>
+            )}
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs value={`step-${step}`} className="w-full">

@@ -35,4 +35,25 @@ export async function getUploadById(id, token) {
   });
   if (!res.ok) throw new Error('Failed to fetch upload');
   return await res.json();
+}
+
+export async function getPendingInvitations(token) {
+  const res = await fetch('/api/teams/invitations/pending', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('Failed to fetch pending invitations');
+  return await res.json();
+}
+
+export async function respondToInvitation(teamId, status, token) {
+  const res = await fetch('/api/teams/invitation/respond', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ teamId, status }),
+  });
+  if (!res.ok) throw new Error('Failed to respond to invitation');
+  return await res.json();
 } 

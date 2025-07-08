@@ -21,5 +21,7 @@ router.post('/invitation/respond', auth, teamController.respondToInvitation);
 router.post('/:id/remove-member', auth, teamController.removeMember);
 // Change a member's role
 router.post('/:id/change-role', auth, teamController.changeMemberRole);
+// Get all pending invitations for the logged-in user
+router.get('/invitations/pending', auth, teamController.getPendingInvitations);
 
 module.exports = router; 

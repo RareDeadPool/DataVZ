@@ -31,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const navigationItems = [
   {
@@ -80,11 +81,44 @@ const bottomItems = [
 
 export function AppSidebar({ onLogout, currentPage = "dashboard", onNavigate, onQuickCreate, ...props }) {
   const user = useSelector(state => state.auth.user);
+  const navigate = useNavigate();
   const handleNavClick = (page) => {
     if (onNavigate) {
-      onNavigate(page)
+      onNavigate(page);
     }
-  }
+    // Also use react-router navigation for main pages
+    switch (page) {
+      case 'dashboard':
+        navigate('/dashboard');
+        break;
+      case 'analytics':
+        navigate('/analytics');
+        break;
+      case 'projects':
+        navigate('/projects');
+        break;
+      case 'team':
+        navigate('/team');
+        break;
+      case 'settings':
+        navigate('/settings');
+        break;
+      case 'help':
+        navigate('/help');
+        break;
+      case 'search':
+        navigate('/search');
+        break;
+      case 'profile':
+        navigate('/profile');
+        break;
+      case 'vizard':
+        navigate('/vizard');
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r" {...props}>

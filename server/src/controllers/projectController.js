@@ -66,4 +66,27 @@ exports.deleteProject = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete project' });
   }
+};
+
+// Add a team to a project
+exports.addTeamToProject = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const project = await Project.findOne({ _id: req.params.id, owner: userId });
+    if (!project) return res.status(404).json({ error: 'Project not found or not authorized' });
+
+    const { teamId } = req.body;
+    if (!teamId) return res.status(400).json({ error: 'teamId is required' });
+
+    // Avoid duplicates
+    if (!project.teams) project.teams = [];
+    if (!project.teams.includes(teamId)) {
+      project.teams.push(teamId);
+      await project.save();
+    }
+
+    res.json(project);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to add team to project' });
+  }
 }; 

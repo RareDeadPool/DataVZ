@@ -33,4 +33,44 @@ app.use('/api/activity', activityRoutes);
 app.use('/api/teams', teamRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); 
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// --- Socket.IO setup ---
+const { Server } = require('socket.io');
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:5173', // Use your frontend URL exactly
+    methods: ['GET', 'POST']
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  // Join a project or file room
+  socket.on('join-room', (roomId, user) => {
+    socket.join(roomId);
+    socket.to(roomId).emit('user-joined', user);
+    // Optionally, broadcast current presence
+  });
+
+  // Project-wide: Excel data edit
+  socket.on('data-edit', (projectId, change) => {
+    socket.to(projectId).emit('data-edit', change);
+  });
+
+  // Project-wide: Chart create/edit
+  socket.on('chart-edit', (projectId, chart) => {
+    socket.to(projectId).emit('chart-edit', chart);
+  });
+
+  // Presence
+  socket.on('presence', (projectId, presence) => {
+    socket.to(projectId).emit('presence', presence);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('A user disconnected:', socket.id);
+    // Optionally, broadcast presence update
+  });
+});

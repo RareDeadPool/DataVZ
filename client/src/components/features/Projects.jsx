@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, Search, Filter, MoreHorizontal, FileSpreadsheet, BarChart3, Users, Star, Clock } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Link } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -206,7 +207,7 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <Card key={project._id} className="cursor-pointer hover:shadow-md transition-shadow">
+            <Card key={project._id || project.id} className="cursor-pointer hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
@@ -258,32 +259,15 @@ export default function ProjectsPage() {
             </Select>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((project) => (
-              <Card key={project.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
-                      {project.favorite && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Open</DropdownMenuItem>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Share</DropdownMenuItem>
-                        <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProjects.map(project => (
+              <Card key={project._id} className="relative group">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
+                    <Link to={`/projects/${project._id}`} className="font-semibold text-lg text-blue-600 hover:underline">{project.name}</Link>
                   </div>
-                  <CardTitle className="text-lg">{project.name}</CardTitle>
-                  <CardDescription className="text-sm">{project.description}</CardDescription>
+                  <CardDescription>{project.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-3 gap-4 text-sm">
@@ -343,8 +327,8 @@ export default function ProjectsPage() {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Includes:</p>
                     <div className="flex flex-wrap gap-1">
-                      {template.charts.map((chart, chartIndex) => (
-                        <Badge key={chartIndex} variant="secondary" className="text-xs">
+                      {template.charts.map((chart) => (
+                        <Badge key={chart} variant="secondary" className="text-xs">
                           {chart}
                         </Badge>
                       ))}
@@ -365,7 +349,7 @@ export default function ProjectsPage() {
             <CardContent>
               <div className="space-y-4">
                 {projects.slice(0, 3).map((project) => (
-                  <div key={project.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-muted/50">
+                  <div key={project._id || project.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-muted/50">
                     <div className="p-2 bg-muted rounded">
                       <FileSpreadsheet className="h-4 w-4" />
                     </div>
