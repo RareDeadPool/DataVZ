@@ -43,7 +43,17 @@ exports.getProjects = async (req, res) => {
 exports.getProjectById = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const project = await Project.findOne({ _id: req.params.id, $or: [ { owner: userId }, { collaborators: userId } ] });
+    const Team = require('../models/Team');
+    const userTeams = await Team.find({ 'members.userId': userId }).select('_id');
+    const teamIds = userTeams.map(t => t._id);
+    const project = await Project.findOne({
+      _id: req.params.id,
+      $or: [
+        { owner: userId },
+        { collaborators: userId },
+        { teams: { $in: teamIds } }
+      ]
+    });
     if (!project) return res.status(404).json({ error: 'Project not found' });
     res.json(project);
   } catch (err) {
