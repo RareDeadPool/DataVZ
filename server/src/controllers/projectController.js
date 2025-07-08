@@ -21,7 +21,18 @@ exports.createProject = async (req, res) => {
 exports.getProjects = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const projects = await Project.find({ $or: [ { owner: userId }, { collaborators: userId } ] });
+    // Find all teams where the user is a member
+    const Team = require('../models/Team');
+    const userTeams = await Team.find({ 'members.userId': userId }).select('_id');
+    const teamIds = userTeams.map(t => t._id);
+    // Find projects where user is owner, collaborator, or in a team assigned to the project
+    const projects = await Project.find({
+      $or: [
+        { owner: userId },
+        { collaborators: userId },
+        { teams: { $in: teamIds } }
+      ]
+    });
     res.json(projects);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch projects' });
