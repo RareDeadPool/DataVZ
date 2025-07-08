@@ -70,8 +70,9 @@ export default function AuthContainer({ onLogin }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Signup failed');
-      // Optionally auto-login after signup
-      await handleLogin(e);
+      // Store token and redirect after signup
+      localStorage.setItem('token', data.token);
+      onLogin();
     } catch (err) {
       setError(err.message);
     } finally {

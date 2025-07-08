@@ -1,11 +1,12 @@
 const Team = require('../models/Team');
 const sendEmail = require('../utils/sendEmail');
+const User = require('../models/User');
 
 // Create a new team
 exports.createTeam = async (req, res) => {
   try {
     const { name } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.userId; // Fix: use userId from JWT payload
     const team = new Team({
       name,
       members: [{ userId, role: 'owner' }],
@@ -20,8 +21,9 @@ exports.createTeam = async (req, res) => {
 // Get all teams for the current user
 exports.getTeams = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const teams = await Team.find({ 'members.userId': userId });
+    const userId = req.user.userId;
+    const teams = await Team.find({ 'members.userId': userId })
+      .populate('members.userId', 'name email');
     res.json(teams);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -31,7 +33,8 @@ exports.getTeams = async (req, res) => {
 // Get a single team by ID
 exports.getTeamById = async (req, res) => {
   try {
-    const team = await Team.findById(req.params.id);
+    const team = await Team.findById(req.params.id)
+      .populate('members.userId', 'name email');
     if (!team) return res.status(404).json({ error: 'Team not found' });
     res.json(team);
   } catch (err) {
@@ -72,6 +75,11 @@ exports.inviteMember = async (req, res) => {
     const { email } = req.body;
     const team = await Team.findById(req.params.id);
     if (!team) return res.status(404).json({ error: 'Team not found' });
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User with this email does not exist. Ask them to sign up first.' });
+    }
     // Prevent duplicate invitations
     if (team.invitations.some(inv => inv.email === email && inv.status === 'pending')) {
       return res.status(400).json({ error: 'Invitation already sent' });
