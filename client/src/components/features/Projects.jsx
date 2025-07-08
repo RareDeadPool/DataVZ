@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, Search, Filter, MoreHorizontal, FileSpreadsheet, BarChart3, Users, Star, Clock } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -116,6 +117,11 @@ export default function ProjectsPage() {
   const [creating, setCreating] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const user = useSelector(state => state.auth.user);
+  const navigate = useNavigate();
+
+  // Helper: check if user is owner/admin in any team (assume user.teams is available)
+  const canCreateProject = !user || !user.teams || user.teams.some(team => team.role === 'owner' || team.role === 'admin');
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -148,11 +154,26 @@ export default function ProjectsPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(projectForm),
       });
+      if (res.status === 403) {
+        // Project already exists, fetch it by name
+        const projectsRes = await fetch(`${API_URL}/projects`, { headers: { Authorization: `Bearer ${token}` } });
+        if (projectsRes.ok) {
+          const allProjects = await projectsRes.json();
+          const existing = allProjects.find(p => p.name === projectForm.name);
+          if (existing) {
+            setShowModal(false);
+            navigate(`/project/${existing._id}`);
+            return;
+          }
+        }
+        throw new Error('Project already exists, but could not find it.');
+      }
       if (!res.ok) throw new Error('Failed to create project');
       const project = await res.json();
       setProjects(p => [...p, project]);
       setShowModal(false);
       setSuccessMsg('Project created!');
+      navigate(`/project/${project._id}`);
     } catch (err) {
       setErrorMsg(err.message || 'Failed to create project');
     } finally {
@@ -174,10 +195,14 @@ export default function ProjectsPage() {
           <p className="text-muted-foreground">Manage your data visualization projects and dashboards</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setShowModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
+          {canCreateProject ? (
+            <Button onClick={() => setShowModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Project
+            </Button>
+          ) : (
+            <Button disabled title="Only owners or admins can create projects">New Project</Button>
+          )}
         </div>
       </div>
       {showModal && (
@@ -273,11 +298,11 @@ export default function ProjectsPage() {
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div className="flex items-center gap-1">
                       <BarChart3 className="h-3 w-3 text-muted-foreground" />
-                      <span>{project.charts} charts</span>
+                      <span>{project.charts?.length || 0} charts</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="h-3 w-3 text-muted-foreground" />
-                      <span>{project.collaborators} users</span>
+                      <span>{project.collaborators?.length || 0} users</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3 text-muted-foreground" />

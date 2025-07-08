@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const memberSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  role: { type: String, enum: ['owner', 'admin', 'member', 'viewer'], default: 'member' }
+  role: { type: String, enum: ['owner', 'admin', 'editor', 'viewer'], default: 'editor' }
 }, { _id: false });
 
 const invitationSchema = new mongoose.Schema({

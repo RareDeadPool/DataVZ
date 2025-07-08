@@ -36,8 +36,11 @@ export default function ProjectWorkspace() {
   const [showTeamDialog, setShowTeamDialog] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [allTeams, setAllTeams] = useState([]);
+  // Change selectedTeamId to be a string for Radix UI <Select> (single select)
   const [selectedTeamId, setSelectedTeamId] = useState('');
   const [loadingTeams, setLoadingTeams] = useState(false);
+  // Add userRole state
+  const [userRole, setUserRole] = useState('');
 
   // Add back missing uploadedFiles and selectedSheet state
   const [uploadedFiles, setUploadedFiles] = useState([]); // [{ name, sheets: [{ name, data }] }]
@@ -57,6 +60,17 @@ export default function ProjectWorkspace() {
   const chartSheetData = uploadedFiles[chartFileIdx]?.sheets?.[chartSheetIdx]?.data || [];
   const chartSheetColumns = chartSheetData[0] ? Object.keys(chartSheetData[0]) : [];
 
+  // Helper to auto-save project progress
+  const saveProjectProgress = useCallback(async (fields) => {
+    if (!projectId) return;
+    const token = localStorage.getItem('token');
+    await fetch(`${API_URL}/projects/${projectId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(fields),
+    });
+  }, [projectId]);
+
   // Upload Excel file (single upload area)
   const onDrop = async (acceptedFiles) => {
     for (const file of acceptedFiles) {
@@ -67,7 +81,11 @@ export default function ProjectWorkspace() {
           name,
           data: XLSX.utils.sheet_to_json(workbook.Sheets[name])
         }));
-        setUploadedFiles(prev => [...prev, { name: file.name, sheets }]);
+        setUploadedFiles(prev => {
+          const updated = [...prev, { name: file.name, sheets }];
+          saveProjectProgress({ uploadedFiles: updated });
+          return updated;
+        });
       } catch (err) {
         toast.error('Failed to parse Excel file.');
       }
@@ -126,8 +144,26 @@ export default function ProjectWorkspace() {
         const data = await res.json();
         setProject(data);
         setExcelData(data.excelData || []);
+        setUploadedFiles(data.uploadedFiles || []);
         setCharts(data.charts || []);
         setTeams(data.teams || []); // <-- Set teams from backend
+        setUserRole(data.userRole);
+        // If excelData is empty but uploadedFiles exist, set excelData to first sheet
+        if ((data.excelData && data.excelData.length > 0)) {
+          setExcelData(data.excelData);
+        } else if (data.uploadedFiles && data.uploadedFiles.length > 0 && data.uploadedFiles[0].sheets && data.uploadedFiles[0].sheets.length > 0) {
+          setExcelData(data.uploadedFiles[0].sheets[0].data || []);
+        } else {
+          setExcelData([]);
+        }
+        // Auto-advance stepper based on progress
+        if ((data.uploadedFiles?.length > 0 || data.excelData?.length > 0) && (data.teams?.length > 0)) {
+          setStep(2);
+        } else if (data.uploadedFiles?.length > 0 || data.excelData?.length > 0) {
+          setStep(1);
+        } else {
+          setStep(0);
+        }
       } catch (err) {
         setError(err.message || 'Failed to load project.');
       } finally {
@@ -167,19 +203,20 @@ export default function ProjectWorkspace() {
 
   // Update handleChartEdit to handle both create and edit
   const handleChartEdit = (chart) => {
+    let updatedCharts;
     if (chart.deleted) {
-      setCharts(prev => prev.filter(c => c._id !== chart._id));
+      updatedCharts = charts.filter(c => c._id !== chart._id);
     } else {
-      setCharts(prev => {
-        const idx = prev.findIndex(c => c._id === chart._id);
-        if (idx !== -1) {
-          const updated = [...prev];
-          updated[idx] = chart;
-          return updated;
-        }
-        return [...prev, chart];
-      });
+      const idx = charts.findIndex(c => c._id === chart._id);
+      if (idx !== -1) {
+        updatedCharts = [...charts];
+        updatedCharts[idx] = chart;
+      } else {
+        updatedCharts = [...charts, chart];
+      }
     }
+    setCharts(updatedCharts);
+    saveProjectProgress({ charts: updatedCharts });
     sendChartEdit(chart);
     setShowChartModal(false);
     setEditingChartId(null);
@@ -247,10 +284,8 @@ export default function ProjectWorkspace() {
   }, [showTeamDialog]);
 
   // Add team handler (dropdown version)
-  const handleAddTeam = async (teamId) => {
-    if (!teamId) return;
-    const team = allTeams.find(t => t._id === teamId);
-    if (!team) return;
+  const handleAddTeam = async () => {
+    if (!selectedTeamId) return;
     setLoadingTeams(true);
     try {
       const token = localStorage.getItem('token');
@@ -258,17 +293,22 @@ export default function ProjectWorkspace() {
       const res = await fetch(`${API_URL}/projects/${projectId}/teams`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ teamId })
+        body: JSON.stringify({ teamId: selectedTeamId })
       });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to add team');
       }
-      setTeams(prev => {
-        const updated = [...prev, team];
-        return updated;
+      // Fetch updated project to get full teams list
+      const projectRes = await fetch(`${API_URL}/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      if (socket) socket.emit('team-added', team);
+      if (projectRes.ok) {
+        const updatedProject = await projectRes.json();
+        setTeams(updatedProject.teams || []);
+      }
+      setShowTeamDialog(false);
+      setSelectedTeamId('');
       toast.success('Team added!');
     } catch (err) {
       toast.error(err.message || 'Failed to add team');
