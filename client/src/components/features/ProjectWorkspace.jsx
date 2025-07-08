@@ -236,9 +236,9 @@ export default function ProjectWorkspace() {
   }, [showTeamDialog]);
 
   // Add team handler (dropdown version)
-  const handleAddTeam = async () => {
-    if (!selectedTeamId) return;
-    const team = allTeams.find(t => t._id === selectedTeamId);
+  const handleAddTeam = async (teamId) => {
+    if (!teamId) return;
+    const team = allTeams.find(t => t._id === teamId);
     if (!team) return;
     setLoadingTeams(true);
     try {
@@ -247,7 +247,7 @@ export default function ProjectWorkspace() {
       const res = await fetch(`${API_URL}/projects/${projectId}/teams`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ teamId: selectedTeamId })
+        body: JSON.stringify({ teamId })
       });
       if (!res.ok) {
         const data = await res.json();
@@ -255,12 +255,8 @@ export default function ProjectWorkspace() {
       }
       setTeams(prev => {
         const updated = [...prev, team];
-        // If this is the first team, advance to next step
-        if (updated.length === 1) setStep(2);
         return updated;
       });
-      setShowTeamDialog(false);
-      setSelectedTeamId('');
       if (socket) socket.emit('team-added', team);
       toast.success('Team added!');
     } catch (err) {
@@ -306,13 +302,6 @@ export default function ProjectWorkspace() {
       socket.off('team-added', handleTeamAdded);
     };
   }, [socket]);
-
-  // Advance to next step when a team is present
-  useEffect(() => {
-    if (step === 1 && teams.length > 0) {
-      setStep(2);
-    }
-  }, [teams, step]);
 
   // Remove early return for !project, show workspace with loading state instead
   if (loading) return <div className="p-6">Loading project workspace...</div>;
@@ -373,14 +362,14 @@ export default function ProjectWorkspace() {
       {step === 1 && (
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle>Select Team</CardTitle>
+            <CardTitle>Select Team(s)</CardTitle>
           </CardHeader>
           <CardContent>
             {loadingTeams ? (
               <div className="flex flex-col items-center justify-center p-4 rounded bg-muted/50 border border-dashed border-muted-foreground">
                 <span className="text-muted-foreground text-lg font-semibold mb-2">Loading teams...</span>
               </div>
-            ) : allTeams.filter(t => !teams.some(pt => pt._id === t._id)).length === 0 ? (
+            ) : allTeams.length === 0 ? (
               <div className="flex flex-col items-center gap-3 p-4 rounded bg-muted/50 border border-dashed border-muted-foreground">
                 <span className="text-muted-foreground mb-2 text-lg font-semibold">No teams available to add.</span>
                 <Button size="lg" className="w-full max-w-xs" onClick={() => setShowTeamDialog(true)}>
@@ -389,28 +378,52 @@ export default function ProjectWorkspace() {
                 <span className="text-xs text-muted-foreground">You need to create a team before proceeding.</span>
               </div>
             ) : (
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allTeams.filter(t => !teams.some(pt => pt._id === t._id)).map(team => (
-                    <SelectItem key={team._id} value={team._id}>{team.name}</SelectItem>
+              <div>
+                <label className="block text-sm font-medium mb-1">Select one or more teams (optional)</label>
+                <select
+                  multiple
+                  value={selectedTeamId}
+                  onChange={e => {
+                    const options = Array.from(e.target.selectedOptions, option => option.value);
+                    setSelectedTeamId(options);
+                  }}
+                  className="border rounded p-2 w-full h-32"
+                >
+                  {allTeams.map(team => (
+                    <option key={team._id} value={team._id}>{team.name}</option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+              </div>
             )}
             <div className="flex gap-2 mt-4">
               <Button variant="outline" onClick={() => setStep(0)}>Back</Button>
               <Button
                 onClick={async () => {
-                  if (selectedTeamId) {
-                    await handleAddTeam();
-                    setSelectedTeamId(''); // Reset after adding
+                  setLoadingTeams(true);
+                  try {
+                    const token = localStorage.getItem('token');
+                    const res = await fetch(`${API_URL}/projects/${projectId}/teams`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ teamIds: selectedTeamId })
+                    });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      throw new Error(data.error || 'Failed to set teams');
+                    }
+                    // Get the updated project from backend
+                    const updatedProject = await res.json();
+                    // Find the full team objects for the selected IDs
+                    setTeams(allTeams.filter(t => selectedTeamId.includes(t._id)));
+                    setSelectedTeamId([]);
                     setStep(2);
+                  } catch (err) {
+                    toast.error(err.message || 'Failed to set teams');
+                  } finally {
+                    setLoadingTeams(false);
                   }
                 }}
-                disabled={!selectedTeamId || loadingTeams || allTeams.filter(t => !teams.some(pt => pt._id === t._id)).length === 0}
+                disabled={loadingTeams}
               >
                 Next: Chart Generation
               </Button>
@@ -463,11 +476,9 @@ export default function ProjectWorkspace() {
             <CardContent>
               {teams.length > 0 ? (
                 <ul className="list-disc ml-6">
-                  {[...new Set(teams.map(team => (typeof team === 'string' || typeof team === 'number') ? team : team._id))]
-                    .map((teamId, idx) => {
-                      let teamObj = allTeams.find(t => t._id === teamId) || { name: teamId };
-                      return <li key={teamObj._id || teamObj.name || idx}>{teamObj.name}</li>;
-                    })}
+                  {teams.map((team, idx) => (
+                    <li key={team._id || team.name || idx}>{team.name}</li>
+                  ))}
                 </ul>
               ) : (
                 <div className="flex flex-col items-center justify-center p-4 rounded bg-muted/50 border border-dashed border-muted-foreground">

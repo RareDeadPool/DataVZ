@@ -20,10 +20,11 @@ exports.createTeam = async (req, res) => {
   }
 };
 
-// Get all teams (for admin/dev/demo purposes)
+// Get all teams (user-centric)
 exports.getTeams = async (req, res) => {
   try {
-    const teams = await Team.find().populate('members.userId', 'name email');
+    const userId = req.user.userId;
+    const teams = await Team.find({ 'members.userId': userId }).populate('members.userId', 'name email');
     res.json(teams);
   } catch (err) {
     res.status(500).json({ error: err.message });

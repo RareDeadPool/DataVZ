@@ -9,5 +9,6 @@ router.get('/:id', auth, projectController.getProjectById);
 router.put('/:id', auth, projectController.updateProject);
 router.delete('/:id', auth, projectController.deleteProject);
 router.post('/:id/teams', auth, projectController.addTeamToProject);
+router.put('/:id/teams', auth, projectController.setTeamsForProject);
 
 module.exports = router; 

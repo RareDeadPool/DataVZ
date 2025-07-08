@@ -89,4 +89,22 @@ exports.addTeamToProject = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to add team to project' });
   }
+};
+
+// Add a controller to set (replace) all teams for a project
+exports.setTeamsForProject = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const project = await Project.findOne({ _id: req.params.id, owner: userId });
+    if (!project) return res.status(404).json({ error: 'Project not found or not authorized' });
+
+    const { teamIds } = req.body;
+    if (!Array.isArray(teamIds)) return res.status(400).json({ error: 'teamIds (array) is required' });
+
+    project.teams = teamIds;
+    await project.save();
+    res.json(project);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to set teams for project' });
+  }
 }; 
