@@ -1,6 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { login } from '@/store/slices/authSlice';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ThemeToggle } from '../../common/mode-toggle';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from "lucide-react"
 
-export default function AuthContainer({ onLogin }) {
+export default function AuthContainer() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -20,6 +23,8 @@ export default function AuthContainer({ onLogin }) {
     name: "",
     confirmPassword: "",
   })
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -45,7 +50,8 @@ export default function AuthContainer({ onLogin }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Login failed');
       localStorage.setItem('token', data.token);
-      onLogin();
+      dispatch(login({ email: formData.email, ...data.user }));
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -70,9 +76,9 @@ export default function AuthContainer({ onLogin }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Signup failed');
-      // Store token and redirect after signup
       localStorage.setItem('token', data.token);
-      onLogin();
+      dispatch(login({ email: formData.email, ...data.user }));
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message);
     } finally {

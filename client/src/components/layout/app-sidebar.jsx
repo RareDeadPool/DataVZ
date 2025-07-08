@@ -30,6 +30,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useSelector } from 'react-redux';
 
 const navigationItems = [
   {
@@ -78,6 +79,7 @@ const bottomItems = [
 ]
 
 export function AppSidebar({ onLogout, currentPage = "dashboard", onNavigate, onQuickCreate, ...props }) {
+  const user = useSelector(state => state.auth.user);
   const handleNavClick = (page) => {
     if (onNavigate) {
       onNavigate(page)
@@ -156,12 +158,14 @@ export function AppSidebar({ onLogout, currentPage = "dashboard", onNavigate, on
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src="/avatars/01.png" alt="Aditya Sawant" />
-                    <AvatarFallback className="rounded-lg bg-blue-600 text-white">AS</AvatarFallback>
+                    <AvatarImage src="/avatars/01.png" alt={user?.name || "User"} />
+                    <AvatarFallback className="rounded-lg bg-blue-600 text-white">
+                      {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Aditya Sawant</span>
-                    <span className="truncate text-xs">adityasawant0708@outlook.com</span>
+                    <span className="truncate font-semibold">{user?.name || 'User'}</span>
+                    <span className="truncate text-xs">{user?.email || ''}</span>
                   </div>
                   <ChevronDown className="ml-auto size-4" />
                 </SidebarMenuButton>
