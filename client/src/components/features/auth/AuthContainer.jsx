@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login } from '@/store/slices/authSlice';
@@ -25,6 +25,24 @@ export default function AuthContainer() {
   })
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Handle Google OAuth redirect
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      localStorage.setItem('token', token);
+      // Fetch user profile with token and update Redux
+      fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000/api') + '/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => res.json())
+        .then(user => {
+          dispatch(login(user));
+          navigate('/dashboard');
+        });
+    }
+  }, [dispatch, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -162,6 +180,18 @@ export default function AuthContainer() {
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
               </form>
+              <div className="my-4 flex items-center justify-center">
+                <span className="text-xs text-gray-400">or</span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full flex items-center justify-center gap-2 border-gray-300"
+                onClick={() => window.location.href = 'http://localhost:5000/api/auth/google'}
+              >
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" className="h-5 w-5" />
+                Sign in with Google
+              </Button>
             </TabsContent>
 
             <TabsContent value="signup">

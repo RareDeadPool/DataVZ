@@ -83,7 +83,9 @@ export default function ProjectWorkspace() {
         }));
         setUploadedFiles(prev => {
           const updated = [...prev, { name: file.name, sheets }];
-          saveProjectProgress({ uploadedFiles: updated });
+          // Save both uploadedFiles and excelData (first sheet)
+          saveProjectProgress({ uploadedFiles: updated, excelData: sheets[0]?.data || [] });
+          setExcelData(sheets[0]?.data || []);
           return updated;
         });
       } catch (err) {
@@ -99,6 +101,83 @@ export default function ProjectWorkspace() {
   const getSectionFileKey = (sectionId, fileIdx) => `${sectionId}_${fileIdx}`;
 
   const fileInputRef = useRef();
+
+  // Refs for 3D chart containers and ChartRenderer instances
+  const chart3dContainerRefs = useRef({});
+  const chart3dRendererRefs = useRef({});
+
+  // Helper to get all chart images (2D and 3D) with robust 3D export
+  async function getAllChartImages() {
+    // Wait for charts to render
+    await new Promise(res => setTimeout(res, 300));
+    // Select only chart containers with a data-chart-id
+    const chartDivs = Array.from(document.querySelectorAll('#chart-dnd-area [data-chart-id]'));
+    console.log('Export: Found chartDivs:', chartDivs.length);
+    const images = [];
+    for (let i = 0; i < chartDivs.length; i++) {
+      const chartDiv = chartDivs[i];
+      const chartId = chartDiv.getAttribute('data-chart-id');
+      // Try 3D chart export via ref
+      if (chartId && chart3dRendererRefs.current && chart3dRendererRefs.current[chartId]) {
+        const rendererRef = chart3dRendererRefs.current[chartId];
+        const renderer = rendererRef.getRenderer && rendererRef.getRenderer();
+        const scene = rendererRef.getScene && rendererRef.getScene();
+        const camera = rendererRef.getCamera && rendererRef.getCamera();
+        const canvas = rendererRef.getCanvas && rendererRef.getCanvas();
+        if (renderer && scene && camera && canvas) {
+          renderer.render(scene, camera); // Force render
+          // Wait for next animation frame to ensure canvas is drawn
+          await new Promise(requestAnimationFrame);
+          try {
+            const dataUrl = canvas.toDataURL('image/png');
+            if (dataUrl && dataUrl !== 'data:,') {
+              images.push(dataUrl);
+              continue;
+            } else {
+              console.warn('Export: Chart', i, '3D canvas toDataURL is empty');
+            }
+          } catch (err) {
+            console.warn('Export: Chart', i, '3D canvas toDataURL failed', err);
+          }
+        }
+      }
+      // Fallback to 2D/legacy logic
+      const threeCanvas = chartDiv.querySelector('canvas');
+      if (threeCanvas) {
+        console.log(`Export: Chart ${i} canvas found:`, threeCanvas.width, threeCanvas.height, threeCanvas.style.display, threeCanvas.style.visibility);
+        try {
+          const dataUrl = threeCanvas.toDataURL('image/png');
+          if (dataUrl && dataUrl !== 'data:,') {
+            images.push(dataUrl);
+            continue;
+          } else {
+            console.warn('Export: Chart', i, 'canvas toDataURL is empty');
+          }
+        } catch (err) {
+          console.warn('Export: Chart', i, 'canvas toDataURL failed', err);
+        }
+      } else {
+        console.warn('Export: Chart', i, 'no canvas found in chartDiv');
+      }
+      // Fallback to html2canvas for 2D chart (if no canvas or toDataURL fails)
+      try {
+        const canvas = await html2canvas(chartDiv);
+        const dataUrl = canvas.toDataURL('image/png');
+        if (dataUrl && dataUrl !== 'data:,') {
+          images.push(dataUrl);
+          continue;
+        } else {
+          console.warn('Export: Chart', i, 'html2canvas dataUrl is empty');
+        }
+      } catch (err) {
+        console.warn('Export: Chart', i, 'html2canvas failed', err);
+      }
+    }
+    if (images.length === 0) {
+      console.warn('Export: No valid chart images found!');
+    }
+    return images;
+  }
 
   // Real-time collaboration
   const handleDataEditCollab = useCallback((change) => setExcelData(change), []);
@@ -257,6 +336,12 @@ export default function ProjectWorkspace() {
       const sheet = workbook.Sheets[sheetName];
       const json = XLSX.utils.sheet_to_json(sheet);
       setExcelData(json);
+      // Save both uploadedFiles and excelData (single file upload)
+      setUploadedFiles(prev => {
+        const updated = [...prev, { name: file.name, sheets: [{ name: sheetName, data: json }] }];
+        saveProjectProgress({ uploadedFiles: updated, excelData: json });
+        return updated;
+      });
       toast.success('Excel data uploaded!');
     } catch (err) {
       toast.error('Failed to parse Excel file.');
@@ -515,6 +600,10 @@ export default function ProjectWorkspace() {
                           </div>
                         ) : (
                           charts.map((chart, idx) => (
+                            (() => { 
+                              console.log('ChartRenderer debug', idx, chart.type, chart.xKey, chart.yKey, chart.zKey, JSON.stringify(chart.data)); 
+                              return null; 
+                            })(),
                             <Draggable key={chart._id} draggableId={chart._id} index={idx}>
                               {(provided, snapshot) => (
                                 <div
@@ -522,8 +611,28 @@ export default function ProjectWorkspace() {
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   className={`mb-4 ${snapshot.isDragging ? 'bg-blue-50' : ''}`}
+                                  data-chart-id={chart._id}
                                 >
-                                  <ChartRenderer {...chart} />
+                                  {chart.type && chart.type.startsWith('3d') ? (
+                                    <div
+                                      ref={el => {
+                                        if (!chart3dContainerRefs.current) chart3dContainerRefs.current = {};
+                                        chart3dContainerRefs.current[chart._id] = el;
+                                      }}
+                                      style={{ height: 400 }}
+                                      data-chart-id={chart._id}
+                                    >
+                                      <ChartRenderer
+                                        {...chart}
+                                        ref={ref => {
+                                          if (!chart3dRendererRefs.current) chart3dRendererRefs.current = {};
+                                          chart3dRendererRefs.current[chart._id] = ref;
+                                        }}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <ChartRenderer {...chart} />
+                                  )}
                                   <div className="flex gap-2 mt-1">
                                     <Button size="xs" variant="outline" onClick={() => handleEditChart(chart)} title="Edit this chart">Edit</Button>
                                     <Button size="xs" variant="destructive" onClick={() => handleDeleteChart(chart._id)} title="Delete this chart">Delete</Button>
@@ -541,27 +650,127 @@ export default function ProjectWorkspace() {
               </div>
               <div className="flex gap-2 mt-4 justify-end">
                 <Button variant="outline" onClick={async () => {
-                  const chartArea = document.getElementById('chart-dnd-area');
-                  if (!chartArea) return;
-                  const canvas = await html2canvas(chartArea);
-                  const imgData = canvas.toDataURL('image/png');
+                  const images = await getAllChartImages();
+                  if (images.length === 0) {
+                    alert('No chart images found to export.');
+                    return;
+                  }
                   const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
                   const pageWidth = pdf.internal.pageSize.getWidth();
                   const pageHeight = pdf.internal.pageSize.getHeight();
-                  const imgWidth = pageWidth;
-                  const imgHeight = canvas.height * (imgWidth / canvas.width);
-                  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                  for (let i = 0; i < images.length; i++) {
+                    const img = new window.Image();
+                    img.src = images[i];
+                    await new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+                    if (!img.width || !img.height) {
+                      console.warn('Chart export: Skipping image with invalid dimensions', i, images[i]);
+                      continue;
+                    }
+                    // Clamp image size to fit page
+                    let imgWidth = pageWidth;
+                    let imgHeight = img.height * (imgWidth / img.width);
+                    if (imgHeight > pageHeight) {
+                      imgHeight = pageHeight;
+                      imgWidth = img.width * (imgHeight / img.height);
+                    }
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(images[i], 'PNG', 0, 0, imgWidth, imgHeight);
+                  }
                   pdf.save('charts.pdf');
                 }}>Export as PDF</Button>
                 <Button variant="outline" onClick={async () => {
-                  const chartArea = document.getElementById('chart-dnd-area');
-                  if (!chartArea) return;
-                  const canvas = await html2canvas(chartArea);
+                  const images = await getAllChartImages();
+                  if (images.length === 0) return;
+                  // Combine vertically into one canvas
+                  const imgEls = await Promise.all(images.map(src => new Promise(resolve => {
+                    const img = new Image();
+                    img.src = src;
+                    img.onload = () => resolve(img);
+                  })));
+                  const totalHeight = imgEls.reduce((sum, img) => sum + img.height, 0);
+                  const maxWidth = Math.max(...imgEls.map(img => img.width));
+                  const canvas = document.createElement('canvas');
+                  canvas.width = maxWidth;
+                  canvas.height = totalHeight;
+                  const ctx = canvas.getContext('2d');
+                  let y = 0;
+                  for (const img of imgEls) {
+                    ctx.drawImage(img, 0, y, img.width, img.height);
+                    y += img.height;
+                  }
                   const link = document.createElement('a');
                   link.download = 'charts.png';
                   link.href = canvas.toDataURL('image/png');
                   link.click();
                 }}>Export as Image</Button>
+                {/* TEST BUTTON: Export first 2D chart's canvas as PNG and append to DOM for debug */}
+                <Button variant="outline" onClick={async () => {
+                  // Wait for 1 second to ensure charts are rendered
+                  await new Promise(res => setTimeout(res, 1000));
+                  const chartCanvas = document.querySelector('#chart-dnd-area > div canvas');
+                  if (!chartCanvas) {
+                    alert('No chart.js canvas found!');
+                    return;
+                  }
+                  try {
+                    const dataUrl = chartCanvas.toDataURL('image/png');
+                    if (!dataUrl || dataUrl === 'data:,') {
+                      alert('Canvas toDataURL is empty!');
+                      return;
+                    }
+                    const img = new Image();
+                    img.src = dataUrl;
+                    img.style.border = '2px solid red';
+                    img.style.margin = '10px';
+                    document.body.appendChild(img);
+                    alert('Canvas exported and appended to DOM. Check the bottom of the page.');
+                  } catch (err) {
+                    alert('Error exporting canvas: ' + err);
+                  }
+                }}>Test 2D Canvas Export</Button>
+                <Button variant="outline" onClick={async () => {
+                  // Wait for 1 second to ensure 3D chart is rendered
+                  await new Promise(res => setTimeout(res, 1000));
+                  // Find the first 3D chart's renderer ref
+                  const chartIds = Object.keys(chart3dRendererRefs.current || {});
+                  if (!chartIds.length) {
+                    alert('No 3D chart refs found!');
+                    return;
+                  }
+                  const rendererRef = chart3dRendererRefs.current[chartIds[0]];
+                  if (!rendererRef) {
+                    alert('3D chart renderer ref not found!');
+                    return;
+                  }
+                  const renderer = rendererRef.getRenderer && rendererRef.getRenderer();
+                  const scene = rendererRef.getScene && rendererRef.getScene();
+                  const camera = rendererRef.getCamera && rendererRef.getCamera();
+                  const canvas = rendererRef.getCanvas && rendererRef.getCanvas();
+                  if (renderer && scene && camera && canvas) {
+                    renderer.render(scene, camera); // Force render
+                  }
+                  if (!canvas) {
+                    alert('3D chart canvas not found!');
+                    return;
+                  }
+                  try {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    console.log('3D chart dataUrl:', dataUrl);
+                    console.log('3D chart canvas size:', canvas.width, canvas.height);
+                    if (!dataUrl || dataUrl === 'data:,' || canvas.width === 0 || canvas.height === 0) {
+                      alert('3D chart canvas is blank or has zero size!');
+                      return;
+                    }
+                    const img = new Image();
+                    img.src = dataUrl;
+                    img.style.border = '2px solid green';
+                    img.style.margin = '10px';
+                    document.body.appendChild(img);
+                    alert('3D chart canvas exported and appended to DOM. Check the bottom of the page.');
+                  } catch (err) {
+                    alert('Error exporting 3D chart canvas: ' + err);
+                  }
+                }}>Test 3D Canvas Export</Button>
               </div>
             </CardContent>
           </Card>

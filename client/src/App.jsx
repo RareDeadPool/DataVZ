@@ -7,6 +7,11 @@ import AnalyticsPage from './components/features/AnalyticsPage';
 import ProjectWorkspace from './components/features/ProjectWorkspace';
 import ProjectsPage from './components/features/Projects';
 import TeamsPage from './components/features/TeamsPage';
+import Vizard from './components/features/AskAI';
+import SearchPage from './components/features/SearchPage';
+import HelpPage from './components/features/HelpPage';
+import Profile from './components/features/Profile';
+import SettingsPage from './components/features/SettingsPage';
 import { ThemeProvider } from './components/common/theme-provider';
 import MainLayout from './components/layout/MainLayout';
 import { useDispatch } from 'react-redux';
@@ -49,6 +54,11 @@ function App() {
           <Route path="/projects/:projectId" element={<MainLayout><ProjectWorkspace /></MainLayout>} />
           <Route path="/team" element={<MainLayout><TeamsPage /></MainLayout>} />
           <Route path="/teams" element={<MainLayout><TeamsPage /></MainLayout>} />
+          <Route path="/vizard" element={<MainLayout><Vizard /></MainLayout>} />
+          <Route path="/search" element={<MainLayout><SearchPage /></MainLayout>} />
+          <Route path="/help" element={<MainLayout><HelpPage /></MainLayout>} />
+          <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
+          <Route path="/settings" element={<MainLayout><SettingsPage /></MainLayout>} />
         </Routes>
       </Router>
     </ThemeProvider>

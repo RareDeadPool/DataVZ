@@ -61,12 +61,55 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const updates = {};
-    if (req.body.name) updates.name = req.body.name;
-    if (req.body.email) updates.email = req.body.email;
-    if (req.body.password) updates.password = await bcrypt.hash(req.body.password, 10);
+    if (req.body.name && req.body.name.trim() !== "") updates.name = req.body.name;
+    if (req.body.email && req.body.email.trim() !== "") updates.email = req.body.email;
+    if (req.body.password && req.body.password.trim() !== "") updates.password = await bcrypt.hash(req.body.password, 10);
+    if (req.body.bio !== undefined) updates.bio = req.body.bio;
+    if (req.body.location !== undefined) updates.location = req.body.location;
+    // Allow avatar to be cleared (empty string) or set
+    if (req.body.avatar !== undefined) updates.avatar = req.body.avatar;
     const user = await User.findByIdAndUpdate(req.user.userId, updates, { new: true }).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found.' });
     res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+exports.uploadAvatar = async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'No file uploaded.' });
+  const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+  try {
+    const user = await User.findByIdAndUpdate(req.user.userId, { avatar: avatarUrl }, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    res.json({ avatar: avatarUrl, user });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'Current and new password are required.' });
+  }
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Current password is incorrect.' });
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ message: 'Password changed successfully.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+exports.deleteAccount = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user.userId);
+    res.json({ message: 'Account deleted successfully.' });
   } catch (err) {
     res.status(500).json({ message: 'Server error.' });
   }

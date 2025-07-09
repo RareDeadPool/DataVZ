@@ -162,7 +162,7 @@ export default function ProjectsPage() {
           const existing = allProjects.find(p => p.name === projectForm.name);
           if (existing) {
             setShowModal(false);
-            navigate(`/project/${existing._id}`);
+            navigate(`/projects/${existing._id}`);
             return;
           }
         }
@@ -173,7 +173,7 @@ export default function ProjectsPage() {
       setProjects(p => [...p, project]);
       setShowModal(false);
       setSuccessMsg('Project created!');
-      navigate(`/project/${project._id}`);
+      navigate(`/projects/${project._id}`);
     } catch (err) {
       setErrorMsg(err.message || 'Failed to create project');
     } finally {

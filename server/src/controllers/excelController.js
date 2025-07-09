@@ -65,4 +65,69 @@ exports.deleteUpload = async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete upload' });
   }
+};
+
+// GET /api/excel/analytics/summary
+exports.getAnalyticsSummary = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    // 1. File type breakdown
+    const fileTypeAgg = await ExcelData.aggregate([
+      { $match: { userId } },
+      { $group: { _id: { $substr: ["$filename", { $subtract: [ { $strLenCP: "$filename" }, 3 ] }, 3 ] }, count: { $sum: 1 } } },
+    ]);
+    // 2. Uploads per week (trend)
+    const weekAgg = await ExcelData.aggregate([
+      { $match: { userId } },
+      { $group: {
+        _id: { $isoWeek: "$uploadDate" },
+        count: { $sum: 1 },
+      }},
+      { $sort: { _id: 1 } },
+    ]);
+    // 3. Uploads by project
+    const projectAgg = await ExcelData.aggregate([
+      { $match: { userId } },
+      { $group: { _id: "$projectId", count: { $sum: 1 } } },
+    ]);
+    // 4. Uploads by user (admin only)
+    let userAgg = [];
+    if (req.user.isAdmin) {
+      userAgg = await ExcelData.aggregate([
+        { $group: { _id: "$userId", count: { $sum: 1 } } },
+      ]);
+    }
+    res.json({ fileTypeAgg, weekAgg, projectAgg, userAgg });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch analytics summary' });
+  }
+};
+
+// GET /api/excel/analytics/team
+exports.getTeamAnalytics = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const Team = require('../models/Team');
+    const userTeams = await Team.find({ 'members.userId': userId });
+    const teamIds = userTeams.map(t => t._id);
+    // Aggregate uploads by team
+    const teamAgg = await ExcelData.aggregate([
+      { $match: { projectId: { $ne: null } } },
+      { $lookup: {
+        from: 'projects',
+        localField: 'projectId',
+        foreignField: '_id',
+        as: 'project',
+      }},
+      { $unwind: '$project' },
+      { $match: { 'project.teams': { $in: teamIds } } },
+      { $unwind: '$project.teams' },
+      { $group: { _id: '$project.teams', count: { $sum: 1 } } },
+    ]);
+    res.json({ teamAgg });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch team analytics' });
+  }
 }; 

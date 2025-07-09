@@ -2,10 +2,12 @@ import { Bar, Line, Pie, Scatter, Doughnut, Radar, PolarArea, Bubble } from 'rea
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Tooltip, Legend, RadialLinearScale } from 'chart.js';
 import { Canvas } from '@react-three/fiber';
 import { Box, OrbitControls, Sphere } from '@react-three/drei';
+import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Tooltip, Legend, RadialLinearScale);
 
-export function ChartRenderer({ type, data, xKey, yKey, zKey, palette = ["#3777E0"], customColors = [] }) {
+export const ChartRenderer = forwardRef(function ChartRenderer(props, ref) {
+  const { type, data, xKey, yKey, zKey, palette = ["#3777E0"], customColors = [] } = props;
   if (!data) return null;
   const labels = xKey ? data.map(row => row[xKey]) : [];
   const values = yKey ? data.map(row => row[yKey]) : [];
@@ -27,6 +29,7 @@ export function ChartRenderer({ type, data, xKey, yKey, zKey, palette = ["#3777E
     },
   };
 
+  // 2D charts (no ref needed)
   if (type === 'bar') {
     return <Bar data={{ labels, datasets: [{ label: yKey, data: values, backgroundColor: values.map((_, i) => colors[i % colors.length]) }] }} options={legendOptions} />;
   }
@@ -60,11 +63,34 @@ export function ChartRenderer({ type, data, xKey, yKey, zKey, palette = ["#3777E
   if (type === 'scatter') {
     return <Scatter data={{ datasets: [{ label: `${xKey} vs ${yKey}`, data: data.map(row => ({ x: row[xKey], y: row[yKey] })), backgroundColor: data.map((_, i) => colors[i % colors.length]) }] }} options={{ ...legendOptions, scales: { x: { title: { display: true, text: xKey } }, y: { title: { display: true, text: yKey } } } }} />;
   }
+
+  // 3D charts (attach ref to Canvas and expose renderer)
+  const canvasRef = useRef();
+  const rendererRef = useRef();
+  const sceneRef = useRef();
+  const cameraRef = useRef();
+
+  useImperativeHandle(ref, () => ({
+    getCanvas: () => canvasRef.current ? canvasRef.current.querySelector('canvas') : null,
+    getRenderer: () => rendererRef.current,
+    getScene: () => sceneRef.current,
+    getCamera: () => cameraRef.current,
+  }), []);
+
+  const onCreated = ({ gl, scene, camera }) => {
+    rendererRef.current = gl;
+    sceneRef.current = scene;
+    cameraRef.current = camera;
+    // Attach canvas DOM node
+    if (canvasRef.current && gl.domElement && !canvasRef.current.querySelector('canvas')) {
+      canvasRef.current.appendChild(gl.domElement);
+    }
+  };
+
   if (type === '3d') {
-    // Simple 3D column chart
     return (
-      <div style={{ height: 400 }}>
-        <Canvas camera={{ position: [0, 5, 10], fov: 50 }}>
+      <div style={{ height: 400 }} ref={canvasRef}>
+        <Canvas camera={{ position: [0, 5, 10], fov: 50 }} onCreated={onCreated}>
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} />
           {values.map((v, i) => (
@@ -78,10 +104,9 @@ export function ChartRenderer({ type, data, xKey, yKey, zKey, palette = ["#3777E
     );
   }
   if (type === '3dPie') {
-    // Simple 3D pie chart placeholder
     return (
-      <div style={{ height: 400 }}>
-        <Canvas camera={{ position: [0, 5, 10], fov: 50 }}>
+      <div style={{ height: 400 }} ref={canvasRef}>
+        <Canvas camera={{ position: [0, 5, 10], fov: 50 }} onCreated={onCreated}>
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} />
           {values.map((v, i) => (
@@ -95,10 +120,9 @@ export function ChartRenderer({ type, data, xKey, yKey, zKey, palette = ["#3777E
     );
   }
   if (type === '3dScatter') {
-    // Simple 3D scatter plot
     return (
-      <div style={{ height: 400 }}>
-        <Canvas camera={{ position: [0, 5, 10], fov: 50 }}>
+      <div style={{ height: 400 }} ref={canvasRef}>
+        <Canvas camera={{ position: [0, 5, 10], fov: 50 }} onCreated={onCreated}>
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} />
           {data.map((row, i) => (
@@ -112,4 +136,4 @@ export function ChartRenderer({ type, data, xKey, yKey, zKey, palette = ["#3777E
     );
   }
   return null;
-} 
+}); 

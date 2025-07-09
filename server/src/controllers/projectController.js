@@ -3,14 +3,29 @@ const Project = require('../models/Project');
 // Create a new project
 exports.createProject = async (req, res) => {
   try {
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({ error: 'Unauthorized: user not found in request' });
+    }
     const { name, description, category, collaborators, teams } = req.body;
     const userId = req.user.userId;
+    // Ensure collaborators is an array of objects with userId and role
+    let safeCollaborators = [];
+    if (Array.isArray(collaborators)) {
+      safeCollaborators = collaborators.map(c => {
+        if (typeof c === 'string') {
+          return { userId: c, role: 'editor' };
+        } else if (typeof c === 'object' && c.userId) {
+          return { userId: c.userId, role: c.role || 'editor' };
+        }
+        return null;
+      }).filter(Boolean);
+    }
     // Only allow creation if user is not already a member/collaborator/owner of a project with the same name or for the same team
     const existingProject = await Project.findOne({
       name,
       $or: [
         { owner: userId },
-        { collaborators: userId },
+        { 'collaborators.userId': userId },
         { teams: { $in: teams || [] } }
       ]
     });
@@ -34,20 +49,30 @@ exports.createProject = async (req, res) => {
       description,
       category,
       owner: userId,
-      collaborators: collaborators || [],
+      collaborators: safeCollaborators,
       teams: teams || [],
     });
     res.status(201).json(project);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create project' });
+    console.error('Error in createProject:', err);
+    res.status(500).json({ error: 'Failed to create project', details: err.message });
   }
 };
 
 // Get all projects for the logged-in user (owner or collaborator)
 exports.getProjects = async (req, res) => {
   try {
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({ error: 'Unauthorized: user not found in request' });
+    }
     const userId = req.user.userId;
-    const Team = require('../models/Team');
+    let Team;
+    try {
+      Team = require('../models/Team');
+    } catch (e) {
+      console.error('Failed to load Team model:', e);
+      return res.status(500).json({ error: 'Server misconfiguration: Team model missing' });
+    }
     const userTeams = await Team.find({ 'members.userId': userId }).select('_id role');
     const teamIds = userTeams.map(t => t._id);
     // Find projects where user is owner, collaborator, or has a team role
@@ -65,7 +90,8 @@ exports.getProjects = async (req, res) => {
     });
     res.json(projectsWithRole);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch projects' });
+    console.error('Error in getProjects:', err);
+    res.status(500).json({ error: 'Failed to fetch projects', details: err.message });
   }
 };
 
