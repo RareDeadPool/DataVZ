@@ -1,97 +1,37 @@
-"use client"
-
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import jsPDF from 'jspdf';
 import { useCallback } from 'react';
-import { DialogFooter } from '@/components/ui/dialog';
+import { 
+  BarChart3, 
+  TrendingUp, 
+  Activity, 
+  PieChart, 
+  Upload,
+  Calendar,
+  Target,
+  Download,
+  Share2,
+  Mail,
+  Copy,
+  ExternalLink,
+  Plus,
+  FileSpreadsheet,
+  Brain,
+  Clock,
+  Star,
+  Search,
+  Filter
+} from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-const kpiData = [
-  { title: 'Total Projects Created', value: 12 },
-  { title: 'Charts Generated', value: 34 },
-  { title: 'Files Uploaded', value: 7 },
-  { title: 'Hours Saved', value: 15 },
-];
-
-const trendsData = {
-  labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-  datasets: [
-    {
-      label: 'Charts Created',
-      data: [2, 5, 3, 7],
-      borderColor: 'rgba(59,130,246,1)',
-      backgroundColor: 'rgba(59,130,246,0.2)',
-      tension: 0.4,
-      fill: true,
-    },
-  ],
-};
-
-const recentActivity = [
-  { type: 'Upload', description: 'Uploaded "Q4_Sales.xlsx"', time: '2 hours ago' },
-  { type: 'Chart', description: 'Created a Bar Chart for "Q4 Sales"', time: '1 hour ago' },
-  { type: 'Edit', description: 'Edited project "Marketing ROI"', time: '45 minutes ago' },
-  { type: 'Share', description: 'Shared "Customer Segmentation" with Sarah', time: '30 minutes ago' },
-  { type: 'Chart', description: 'Created a Pie Chart for "Customer Segmentation"', time: '10 minutes ago' },
-];
-
-const chartTypesData = {
-  labels: ['Bar', 'Line', 'Pie', 'Scatter'],
-  datasets: [
-    {
-      label: 'Chart Types',
-      data: [8, 5, 3, 2],
-      backgroundColor: [
-        'rgba(59,130,246,0.7)',
-        'rgba(16,185,129,0.7)',
-        'rgba(251,191,36,0.7)',
-        'rgba(244,63,94,0.7)'
-      ],
-      borderWidth: 1,
-    },
-  ],
-};
-
-const projectCategoriesData = {
-  labels: ['Sales', 'Marketing', 'Finance', 'Customer'],
-  datasets: [
-    {
-      label: 'Projects',
-      data: [4, 3, 2, 3],
-      backgroundColor: 'rgba(59,130,246,0.5)',
-      borderColor: 'rgba(59,130,246,1)',
-      borderWidth: 1,
-    },
-  ],
-};
-
-const topCollaborators = [
-  { name: 'Sarah Johnson', count: 5 },
-  { name: 'Mike Chen', count: 3 },
-  { name: 'Emily Davis', count: 2 },
-];
-
-const aiSuggestions = [
-  {
-    title: 'Suggested Next Steps',
-    message: 'You haven’t created a chart this week. Try visualizing your latest data!'
-  },
-  {
-    title: 'Data Quality Tips',
-    message: 'Your last upload had missing values. Consider cleaning your data for better results.'
-  },
-  {
-    title: 'Recommended Templates',
-    message: 'Based on your activity, try the "Sales Dashboard" or "Trend Analysis" templates.'
-  },
-];
 
 export default function AnalyticsPage() {
   const chartRef = useRef(null);
@@ -116,10 +56,11 @@ export default function AnalyticsPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [analyticsSummary, setAnalyticsSummary] = useState(null);
-  const [teamAnalytics, setTeamAnalytics] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleProjectFormChange = e => setProjectForm(f => ({ ...f, [e.target.name]: e.target.value }));
   const handleFileChange = e => setFile(e.target.files[0]);
@@ -151,6 +92,7 @@ export default function AnalyticsPage() {
       if (!uploadRes.ok) throw new Error('Failed to upload file');
       setSuccessMsg('Project created and file uploaded!');
       setShowModal(false);
+      fetchData(); // Refresh data
     } catch (err) {
       setErrorMsg(err.message || 'Failed to create project or upload file');
     } finally {
@@ -158,42 +100,69 @@ export default function AnalyticsPage() {
     }
   };
 
+  const fetchData = async () => {
+    setLoading(true);
+    setError('');
+    const token = localStorage.getItem('token');
+    try {
+      const [projRes, chartRes, uploadRes, actRes, summaryRes] = await Promise.all([
+        fetch(`${API_URL}/projects`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/charts`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/excel/recent`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/activity`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/excel/analytics/summary`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      if (!projRes.ok || !chartRes.ok || !uploadRes.ok || !actRes.ok || !summaryRes.ok) throw new Error('Failed to fetch analytics data');
+      setProjects(await projRes.json());
+      setCharts(await chartRes.json());
+      setUploads(await uploadRes.json());
+      setActivities(await actRes.json());
+      setAnalyticsSummary(await summaryRes.json());
+    } catch (err) {
+      setError(err.message || 'Failed to load analytics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError('');
-      const token = localStorage.getItem('token');
-      try {
-        const [projRes, chartRes, uploadRes, actRes, summaryRes, teamRes] = await Promise.all([
-          fetch(`${API_URL}/projects`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/charts`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/excel/recent`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/activity`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/excel/analytics/summary`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/excel/analytics/team`, { headers: { Authorization: `Bearer ${token}` } }),
-        ]);
-        if (!projRes.ok || !chartRes.ok || !uploadRes.ok || !actRes.ok || !summaryRes.ok || !teamRes.ok) throw new Error('Failed to fetch analytics data');
-        setProjects(await projRes.json());
-        setCharts(await chartRes.json());
-        setUploads(await uploadRes.json());
-        setActivities(await actRes.json());
-        setAnalyticsSummary(await summaryRes.json());
-        setTeamAnalytics(await teamRes.json());
-      } catch (err) {
-        setError(err.message || 'Failed to load analytics');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
 
   // KPI values
   const kpiData = [
-    { title: 'Total Projects Created', value: projects.length },
-    { title: 'Charts Generated', value: charts.length },
-    { title: 'Files Uploaded', value: uploads.length },
-    { title: 'Hours Saved', value: (projects.length * 2 + charts.length).toFixed(1) }, // Example estimate
+    { 
+      title: 'Total Projects Created', 
+      value: projects.length || 0,
+      icon: Target,
+      change: '+12%',
+      trend: 'up',
+      color: 'bg-blue-50 text-blue-700 border-blue-200'
+    },
+    { 
+      title: 'Charts Generated', 
+      value: charts.length || 0,
+      icon: BarChart3,
+      change: '+8%',
+      trend: 'up',
+      color: 'bg-green-50 text-green-700 border-green-200'
+    },
+    { 
+      title: 'Files Uploaded', 
+      value: uploads.length || 0,
+      icon: Upload,
+      change: '+15%',
+      trend: 'up',
+      color: 'bg-purple-50 text-purple-700 border-purple-200'
+    },
+    { 
+      title: 'Hours Saved', 
+      value: ((projects.length || 0) * 2 + (charts.length || 0)).toFixed(1),
+      icon: Clock,
+      change: '+5%',
+      trend: 'up',
+      color: 'bg-orange-50 text-orange-700 border-orange-200'
+    },
   ];
 
   // Trends: group charts by week (simple frontend grouping)
@@ -222,10 +191,21 @@ export default function AnalyticsPage() {
 
   // Recent Activity: map activities to display format
   const recentActivity = activities.slice(0, 5).map(a => ({
-    type: a.action.charAt(0).toUpperCase() + a.action.slice(1),
-    description: `${a.action} ${a.targetType || ''} ${a.targetId || ''}`.trim(),
+    type: a.action?.charAt(0).toUpperCase() + a.action?.slice(1) || 'Activity',
+    description: `${a.action || 'Action'} ${a.targetType || ''} ${a.targetId || ''}`.trim(),
     time: new Date(a.timestamp).toLocaleString(),
+    icon: getActivityIcon(a.action)
   }));
+
+  function getActivityIcon(action) {
+    switch(action?.toLowerCase()) {
+      case 'upload': return Upload;
+      case 'chart': return BarChart3;
+      case 'edit': return FileSpreadsheet;
+      case 'share': return Share2;
+      default: return Activity;
+    }
+  }
 
   // Data Insights
   // Chart Types
@@ -249,6 +229,7 @@ export default function AnalyticsPage() {
       },
     ],
   };
+  
   // Project Categories
   const categoryCounts = projects.reduce((acc, p) => {
     if (p.category) acc[p.category] = (acc[p.category] || 0) + 1;
@@ -266,14 +247,7 @@ export default function AnalyticsPage() {
       },
     ],
   };
-  // Top Collaborators
-  const collaboratorCounts = {};
-  projects.forEach(p => (p.collaborators || []).forEach(u => { collaboratorCounts[u] = (collaboratorCounts[u] || 0) + 1; }));
-  const topCollaborators = Object.entries(collaboratorCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([id, count]) => ({ name: id, count })); // You may want to resolve user names
-
+  
   // File type breakdown chart data
   const fileTypeChartData = analyticsSummary && analyticsSummary.fileTypeAgg ? {
     labels: analyticsSummary.fileTypeAgg.map(f => f._id),
@@ -314,22 +288,10 @@ export default function AnalyticsPage() {
     }],
   } : null;
 
-  // Uploads by team chart data
-  const uploadsByTeamData = teamAnalytics && teamAnalytics.teamAgg ? {
-    labels: teamAnalytics.teamAgg.map(t => t._id),
-    datasets: [{
-      label: 'Uploads by Team',
-      data: teamAnalytics.teamAgg.map(t => t.count),
-      backgroundColor: 'rgba(16,185,129,0.7)',
-      borderColor: 'rgba(16,185,129,1)',
-      borderWidth: 1,
-    }],
-  } : null;
-
   const handleKpiClick = (idx) => {
     setSelectedKPI(idx);
     trendsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => setSelectedKPI(null), 1200); // Remove highlight after 1.2s
+    setTimeout(() => setSelectedKPI(null), 1200);
   };
 
   // Helper: Gather analytics summary for export/share
@@ -340,9 +302,8 @@ export default function AnalyticsPage() {
       RecentActivity: recentActivity,
       ChartTypes: chartTypesData,
       ProjectCategories: projectCategoriesData,
-      TopCollaborators: topCollaborators,
     };
-  }, [kpiData, trendsData, recentActivity, chartTypesData, projectCategoriesData, topCollaborators]);
+  }, [kpiData, trendsData, recentActivity, chartTypesData, projectCategoriesData]);
 
   // Export as CSV
   const handleExportCSV = () => {
@@ -378,11 +339,6 @@ export default function AnalyticsPage() {
       csv += `${label},${summary.ProjectCategories.datasets[0].data[idx]}\n`;
     });
     csv += '\n';
-    // Top Collaborators
-    csv += 'Top Collaborators,Count\n';
-    summary.TopCollaborators.forEach(c => {
-      csv += `${c.name},${c.count}\n`;
-    });
     // Download
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -441,20 +397,11 @@ export default function AnalyticsPage() {
       doc.text(`${label}: ${summary.ProjectCategories.datasets[0].data[idx]}`, 12, y);
       y += 6;
     });
-    y += 4;
-    // Top Collaborators
-    doc.text('Top Collaborators:', 10, y);
-    y += 7;
-    summary.TopCollaborators.forEach(c => {
-      doc.text(`${c.name}: ${c.count}`, 12, y);
-      y += 6;
-    });
     doc.save('analytics.pdf');
   };
 
   // Share Analytics: Generate a shareable link (placeholder)
   const handleGenerateShareLink = () => {
-    // In a real app, you would call the backend to generate a shareable link
     setShareLink(window.location.href + '?share=1');
   };
 
@@ -471,8 +418,6 @@ export default function AnalyticsPage() {
     summary.ChartTypes.labels.forEach((label, idx) => { text += `${label}: ${summary.ChartTypes.datasets[0].data[idx]}\n`; });
     text += '\nProject Categories:\n';
     summary.ProjectCategories.labels.forEach((label, idx) => { text += `${label}: ${summary.ProjectCategories.datasets[0].data[idx]}\n`; });
-    text += '\nTop Collaborators:\n';
-    summary.TopCollaborators.forEach(c => { text += `${c.name}: ${c.count}\n`; });
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
@@ -491,163 +436,389 @@ export default function AnalyticsPage() {
     summary.ChartTypes.labels.forEach((label, idx) => { body += `${label}: ${summary.ChartTypes.datasets[0].data[idx]}%0D%0A`; });
     body += '%0D%0AProject Categories:%0D%0A';
     summary.ProjectCategories.labels.forEach((label, idx) => { body += `${label}: ${summary.ProjectCategories.datasets[0].data[idx]}%0D%0A`; });
-    body += '%0D%0ATop Collaborators:%0D%0A';
-    summary.TopCollaborators.forEach(c => { body += `${c.name}: ${c.count}%0D%0A`; });
     window.open(`mailto:?subject=My Analytics Summary&body=${body}`);
   };
 
-  return (
-    <div className="flex-1 space-y-8 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-        <Button onClick={() => setShowModal(true)} variant="default">New Project & Upload Data</Button>
+  // AI Suggestions based on data
+  const aiSuggestions = [
+    {
+      title: 'Performance Insight',
+      message: `You've created ${charts.length} charts this month. Consider creating templates for frequently used chart types.`,
+      icon: Brain,
+      color: 'border-blue-200 bg-blue-50'
+    },
+    {
+      title: 'Data Quality Tip',
+      message: `${uploads.length} files uploaded. Review data quality to ensure accurate visualizations.`,
+      icon: Target,
+      color: 'border-green-200 bg-green-50'
+    },
+  ];
+
+  // Filtered activities for search
+  const filteredActivities = recentActivity.filter(activity =>
+    activity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    activity.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
-      {showModal && (
-        <Dialog open={showModal} onOpenChange={setShowModal}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>New Project & Upload Data</DialogTitle>
-            </DialogHeader>
-            <form className="space-y-4" onSubmit={handleCreateAndUpload}>
-              <Input name="name" placeholder="Project Name" value={projectForm.name} onChange={handleProjectFormChange} required />
-              <Input name="description" placeholder="Description" value={projectForm.description} onChange={handleProjectFormChange} />
-              <Input name="category" placeholder="Category" value={projectForm.category} onChange={handleProjectFormChange} />
-              <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} required />
-              <div className="flex gap-2">
-                <Button type="submit" disabled={uploading}>{uploading ? 'Uploading...' : 'Create & Upload'}</Button>
-                <Button type="button" variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background dark:bg-zinc-900">
+      {/* Header */}
+      <div className="border-b bg-card dark:bg-zinc-900">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
+                <BarChart3 className="h-6 w-6 text-primary" />
               </div>
-              {errorMsg && <div className="text-red-500 text-sm">{errorMsg}</div>}
-              {successMsg && <div className="text-green-600 text-sm">{successMsg}</div>}
-            </form>
-          </DialogContent>
-        </Dialog>
-      )}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpiData.every(item => !item.value) ? (
-          <div className="col-span-4 text-center text-muted-foreground py-8">No data available</div>
-        ) : (
-          kpiData.map((item, idx) => (
-            <Card
-              key={idx}
-              onClick={() => handleKpiClick(idx)}
-              className={`cursor-pointer transition-shadow ${selectedKPI === idx ? 'ring-4 ring-blue-400' : ''}`}
-            >
+              <div>
+                <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+                <p className="text-sm text-muted-foreground">Comprehensive insights and performance metrics</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mr-4">
+                <label className="text-sm font-medium">Time Range:</label>
+                <select
+                  value={timeRange}
+                  onChange={e => setTimeRange(e.target.value)}
+                  className="border rounded px-3 py-1 bg-background text-sm"
+                >
+                  <option value="7d">Last 7 days</option>
+                  <option value="30d">Last 30 days</option>
+                  <option value="year">This Year</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <Button onClick={() => setShowModal(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                New Project
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="flex items-center gap-2">
+              <PieChart className="h-4 w-4" />
+              Insights
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Activity
+            </TabsTrigger>
+            <TabsTrigger value="export" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            {/* KPI Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {kpiData.every(item => !item.value) ? (
+                <div className="col-span-4 text-center text-muted-foreground py-8">
+                  <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No data available yet</p>
+                </div>
+              ) : (
+                kpiData.map((item, idx) => (
+                  <Card
+                    key={idx}
+                    onClick={() => handleKpiClick(idx)}
+                    className={`cursor-pointer transition-all hover:shadow-md ${item.color} ${selectedKPI === idx ? 'ring-2 ring-primary' : ''}`}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium opacity-70">{item.title}</p>
+                          <p className="text-2xl font-bold">{item.value}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <TrendingUp className="h-3 w-3 text-green-600" />
+                            <span className="text-xs text-green-600">{item.change}</span>
+                          </div>
+                        </div>
+                        {React.createElement(item.icon, { className: "h-8 w-8 opacity-60" })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+
+            {/* Trends Chart */}
+            <Card ref={trendsSectionRef}>
               <CardHeader>
-                <CardTitle className="text-sm font-medium">{item.title}</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Performance Trends
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{item.value}</div>
+                {trendsData.labels.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-12">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No trend data available</p>
+                  </div>
+                ) : (
+                  <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                    <canvas ref={chartRef}></canvas>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
-      <div className="flex items-center justify-end mb-2 mt-8">
-        <label className="mr-2 font-medium">Time Range:</label>
-        <select
-          value={timeRange}
-          onChange={e => setTimeRange(e.target.value)}
-          className="border rounded px-2 py-1 bg-background dark:bg-muted"
-        >
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
-          <option value="year">This Year</option>
-          <option value="custom">Custom</option>
-        </select>
-      </div>
-      <div ref={trendsSectionRef} className="bg-white dark:bg-muted rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Trends: Charts Created Per Week</h2>
-        {trendsData.labels.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">No data available</div>
-        ) : (
-          <canvas ref={chartRef} height={300}></canvas>
-        )}
-      </div>
-      <div className="bg-white dark:bg-muted rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        <div className="space-y-3">
-          {recentActivity.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">No recent activity</div>
-          ) : (
-            recentActivity.map((activity, idx) => (
-              <Card key={idx} className="border-l-4 border-blue-500">
-                <CardContent className="flex items-center gap-4 py-4">
-                  <span className="font-semibold text-blue-600 w-20">{activity.type}</span>
-                  <span className="flex-1">{activity.description}</span>
-                  <span className="text-xs text-muted-foreground">{activity.time}</span>
+
+            {/* AI Suggestions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  AI-Powered Insights
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-3">
+                  {aiSuggestions.map((suggestion, idx) => (
+                    <div key={idx} className={`p-4 rounded-lg border ${suggestion.color}`}>
+                      <div className="flex items-start gap-3">
+                        <suggestion.icon className="h-5 w-5 mt-0.5" />
+                        <div>
+                          <h4 className="font-medium text-sm">{suggestion.title}</h4>
+                          <p className="text-xs opacity-70 mt-1">{suggestion.message}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Insights Tab */}
+          <TabsContent value="insights" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Chart Type Distribution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {chartTypesData.labels.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-12">
+                      <PieChart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No chart data available</p>
+                    </div>
+                  ) : (
+                    <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                      <canvas ref={pieRef}></canvas>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
-      </div>
-      <div className="bg-white dark:bg-muted rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Data Insights</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <h3 className="font-semibold mb-2">Most Used Chart Types</h3>
-            {chartTypesData.labels.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">No data available</div>
-            ) : (
-              <canvas ref={pieRef} height={220}></canvas>
-            )}
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Project Categories</h3>
-            {projectCategoriesData.labels.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">No data available</div>
-            ) : (
-              <canvas ref={barRef} height={220}></canvas>
-            )}
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Top Collaborators</h3>
-            {topCollaborators.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">No collaborators found</div>
-            ) : (
-              <ul className="space-y-2">
-                {topCollaborators.map((collab, idx) => (
-                  <li key={idx} className="flex justify-between items-center bg-blue-50 dark:bg-blue-900 rounded px-3 py-2">
-                    <span>{collab.name}</span>
-                    <span className="font-bold text-blue-700 dark:text-blue-300">{collab.count}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="bg-white dark:bg-muted rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">AI-Powered Suggestions</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          {aiSuggestions.map((s, idx) => (
-            <Card key={idx} className="border-l-4 border-green-500">
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Categories</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {projectCategoriesData.labels.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-12">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No project data available</p>
+                    </div>
+                  ) : (
+                    <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                      <canvas ref={barRef}></canvas>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* File Analytics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>File Type Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!fileTypeChartData ? (
+                    <div className="text-center text-muted-foreground py-12">
+                      <FileSpreadsheet className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No file data available</p>
+                    </div>
+                  ) : (
+                    <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                      <canvas id="fileTypeChart"></canvas>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upload Trends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!uploadTrendsData ? (
+                    <div className="text-center text-muted-foreground py-12">
+                      <Upload className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No upload data available</p>
+                    </div>
+                  ) : (
+                    <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                      <canvas id="uploadTrendsChart"></canvas>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Activity Tab */}
+          <TabsContent value="activity" className="space-y-6">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-base font-semibold">{s.title}</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Recent Activity
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search activities..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-64"
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground text-sm">{s.message}</p>
+                <div className="space-y-3">
+                  {filteredActivities.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-12">
+                      <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No recent activity found</p>
+                    </div>
+                  ) : (
+                    filteredActivities.map((activity, idx) => (
+                      <div key={idx} className="flex items-center gap-4 p-3 rounded-lg border bg-card dark:bg-zinc-900">
+                         <div className="p-2 rounded-full bg-muted dark:bg-zinc-800">
+                           {React.createElement(activity.icon, { className: "h-4 w-4" })}
+                         </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">{activity.type}</Badge>
+                            <span className="text-sm">{activity.description}</span>
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {activity.time}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </TabsContent>
+
+          {/* Export Tab */}
+          <TabsContent value="export" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5" />
+                  Export Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Button onClick={handleExportPDF} className="h-auto p-4 flex flex-col items-center gap-2">
+                    <FileSpreadsheet className="h-6 w-6" />
+                    <span>Export as PDF</span>
+                    <span className="text-xs opacity-70">Detailed report with all charts</span>
+                  </Button>
+                  <Button onClick={handleExportCSV} variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <Download className="h-6 w-6" />
+                    <span>Export as CSV</span>
+                    <span className="text-xs opacity-70">Raw data for analysis</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Share2 className="h-5 w-5" />
+                  Share Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Button onClick={() => setShowShareModal(true)} variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <ExternalLink className="h-6 w-6" />
+                    <span>Generate Link</span>
+                    <span className="text-xs opacity-70">Create shareable URL</span>
+                  </Button>
+                  <Button onClick={handleCopySummary} variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <Copy className="h-6 w-6" />
+                    <span>Copy Summary</span>
+                    <span className="text-xs opacity-70">Copy to clipboard</span>
+                  </Button>
+                  <Button onClick={handleShareEmail} variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
+                    <Mail className="h-6 w-6" />
+                    <span>Email Report</span>
+                    <span className="text-xs opacity-70">Send via email</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-      <div className="bg-white dark:bg-muted rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Export & Sharing</h2>
-        <Card className="flex flex-col md:flex-row items-center gap-4 p-4 border-l-4 border-yellow-500">
-          <Button onClick={handleExportPDF} className="w-full md:w-auto">
-            Export as PDF
-          </Button>
-          <Button onClick={handleExportCSV} className="w-full md:w-auto">
-            Export as CSV
-          </Button>
-          <Button variant="outline" onClick={() => setShowShareModal(true)} className="w-full md:w-auto">
-            Share Analytics
-          </Button>
-        </Card>
-      </div>
-      {/* Share Analytics Modal */}
+
+      {/* Create Project Modal */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Project & Upload Data</DialogTitle>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={handleCreateAndUpload}>
+            <Input name="name" placeholder="Project Name" value={projectForm.name} onChange={handleProjectFormChange} required />
+            <Input name="description" placeholder="Description" value={projectForm.description} onChange={handleProjectFormChange} />
+            <Input name="category" placeholder="Category" value={projectForm.category} onChange={handleProjectFormChange} />
+            <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} required />
+            {errorMsg && <div className="text-red-500 text-sm">{errorMsg}</div>}
+            {successMsg && <div className="text-green-600 text-sm">{successMsg}</div>}
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button onClick={handleCreateAndUpload} disabled={uploading}>
+              {uploading ? 'Creating...' : 'Create & Upload'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Modal */}
       <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
         <DialogContent>
           <DialogHeader>
@@ -659,57 +830,16 @@ export default function AnalyticsPage() {
               <div className="flex items-center gap-2">
                 <Input value={shareLink} readOnly className="flex-1" />
                 <Button size="sm" onClick={() => {navigator.clipboard.writeText(shareLink); setCopied(true); setTimeout(() => setCopied(false), 1500);}}>
-                  {copied ? 'Copied!' : 'Copy Link'}
+                  {copied ? 'Copied!' : 'Copy'}
                 </Button>
               </div>
             )}
-            <Button onClick={handleCopySummary} className="w-full">Copy Analytics Summary</Button>
-            <Button onClick={handleShareEmail} className="w-full">Share via Email</Button>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowShareModal(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <div className="bg-white dark:bg-muted rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">File Analytics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="font-semibold mb-2">File Type Breakdown</h3>
-            {!fileTypeChartData ? (
-              <div className="text-center text-muted-foreground py-8">No data available</div>
-            ) : (
-              <canvas id="fileTypeChart" height={220}></canvas>
-            )}
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Upload Trends (Weekly)</h3>
-            {!uploadTrendsData ? (
-              <div className="text-center text-muted-foreground py-8">No data available</div>
-            ) : (
-              <canvas id="uploadTrendsChart" height={220}></canvas>
-            )}
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div>
-            <h3 className="font-semibold mb-2">Uploads by Project</h3>
-            {!uploadsByProjectData ? (
-              <div className="text-center text-muted-foreground py-8">No data available</div>
-            ) : (
-              <canvas id="uploadsByProjectChart" height={220}></canvas>
-            )}
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Uploads by Team</h3>
-            {!uploadsByTeamData ? (
-              <div className="text-center text-muted-foreground py-8">No data available</div>
-            ) : (
-              <canvas id="uploadsByTeamChart" height={220}></canvas>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

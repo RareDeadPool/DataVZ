@@ -32,12 +32,12 @@ export default function SearchPage() {
       {query && (
         <div>
           {filtered.length === 0 ? (
-            <div className="text-gray-500">No results found.</div>
+            <div className="text-muted-foreground">No results found.</div>
           ) : (
             <ul>
               {filtered.map((item, idx) => (
                 <li key={idx} className="py-2 border-b flex items-center gap-2">
-                  <span className="text-xs bg-gray-200 rounded px-2 py-1 mr-2">{item.type}</span>
+                  <span className="text-xs bg-muted dark:bg-zinc-800 rounded px-2 py-1 mr-2">{item.type}</span>
                   <span>{item.name}</span>
                 </li>
               ))}

@@ -5,10 +5,10 @@ import {
   Home,
   Settings,
   User,
-  Users,
+
   HelpCircle,
   Search,
-  Sparkles,
+  BrainCircuit,
   ChevronDown,
   Zap,
   TrendingUp,
@@ -49,15 +49,11 @@ const navigationItems = [
     url: "projects",
     icon: FileSpreadsheet,
   },
-  {
-    title: "Team",
-    url: "team",
-    icon: Users,
-  },
+
   {
     title: "Ask Vizard",
     url: "vizard",
-    icon: Sparkles,
+    icon: BrainCircuit,
   },
 ]
 
@@ -92,9 +88,7 @@ export function AppSidebar({ onLogout, currentPage = "dashboard", onNavigate, on
       case 'projects':
         navigate('/projects');
         break;
-      case 'team':
-        navigate('/team');
-        break;
+
       case 'settings':
         navigate('/settings');
         break;
@@ -202,7 +196,7 @@ export function AppSidebar({ onLogout, currentPage = "dashboard", onNavigate, on
                     {user?.avatar && user.avatar !== "" && getAvatarUrl(user.avatar) !== "/placeholder-user.jpg" ? (
                       <AvatarImage src={getAvatarUrl(user.avatar)} alt={user?.name || "User"} />
                     ) : (
-                      <AvatarFallback className="rounded-lg bg-blue-600 text-white">
+                      <AvatarFallback className="rounded-lg bg-blue-600 dark:bg-blue-900 text-white dark:text-blue-200">
                         {getInitials(user?.name)}
                       </AvatarFallback>
                     )}

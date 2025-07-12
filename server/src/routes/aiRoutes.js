@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { askGemini } = require('../utils/geminiService');
+const { askGemini, askGeminiSummary } = require('../utils/geminiService');
 const ChartHistory = require('../models/ChartHistory');
 const crypto = require('crypto');
 
@@ -81,6 +81,20 @@ router.get('/share/:shareId', async (req, res) => {
     const entry = await ChartHistory.findOne({ shareId: req.params.shareId });
     if (!entry) return res.status(404).json({ error: 'Shared chart not found' });
     res.json({ prompt: entry.prompt, chartConfig: entry.chartConfig });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// New: AI summary endpoint
+router.post('/summary', async (req, res) => {
+  const { prompt, data } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ error: 'Prompt is required.' });
+  }
+  try {
+    const result = await askGeminiSummary(prompt, data);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

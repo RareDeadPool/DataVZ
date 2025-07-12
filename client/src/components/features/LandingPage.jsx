@@ -124,19 +124,19 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-background dark:bg-zinc-900">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground dark:text-white mb-4">
               Everything You Need for Data Visualization
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Powerful features designed to help you create, analyze, and share data insights effortlessly.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow bg-card dark:bg-zinc-900 text-foreground dark:text-white">
                 <CardHeader>
                   <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
                     <feature.icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -144,7 +144,7 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-base">{feature.description}</CardDescription>
+                  <CardDescription className="text-base text-muted-foreground">{feature.description}</CardDescription>
                 </CardContent>
               </Card>
             ))}

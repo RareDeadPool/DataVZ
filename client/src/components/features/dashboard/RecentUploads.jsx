@@ -46,8 +46,13 @@ export function RecentUploads() {
     try {
       const token = localStorage.getItem('token');
       const upload = await getUploadById(id, token);
-      setPreviewData(upload.data.slice(0, 10));
-      setPreviewOpen(true);
+      // Check if upload.data exists and is an array
+      if (upload && upload.data && Array.isArray(upload.data) && upload.data.length > 0) {
+        setPreviewData(upload.data.slice(0, 10));
+        setPreviewOpen(true);
+      } else {
+        alert('No data available for preview');
+      }
     } catch (err) {
       alert('Failed to fetch upload preview');
     }
@@ -64,14 +69,14 @@ export function RecentUploads() {
   }
 
   return (
-    <Card>
+    <Card className="bg-card dark:bg-zinc-900 text-foreground dark:text-white">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
             <CardTitle>Recent Uploads</CardTitle>
           </div>
-          <Badge variant="secondary">{uploads.length}</Badge>
+          <Badge variant="secondary">{uploads ? uploads.length : 0}</Badge>
         </div>
       </CardHeader>
       <CardContent>
@@ -83,27 +88,27 @@ export function RecentUploads() {
           <div className="text-muted-foreground">No uploads yet.</div>
         ) : (
           <div className="space-y-4">
-            {uploads.map((upload) => (
-              <div key={upload._id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                <div className="p-2 bg-background rounded">
+            {uploads && uploads.map((upload) => (
+              <div key={upload?._id || Math.random()} className="flex items-start gap-3 p-3 bg-muted/50 dark:bg-zinc-800 rounded-lg">
+                <div className="p-2 bg-background dark:bg-zinc-900 rounded">
                   <FileSpreadsheet className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{upload.filename}</p>
+                  <p className="font-medium text-sm">{upload?.filename || 'Unknown file'}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="outline" className="text-xs">
-                      {timeAgo(upload.uploadDate)}
+                      {upload?.uploadDate ? timeAgo(upload.uploadDate) : 'Unknown time'}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
-                      # {upload.data.length} rows
+                      # {upload?.data && Array.isArray(upload.data) ? upload.data.length : 0} rows
                     </Badge>
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => handlePreview(upload._id)}>
+                    <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => handlePreview(upload?._id)}>
                       <Eye className="mr-1 h-3 w-3" />
                       Preview
                     </Button>
-                    <Button variant="destructive" size="sm" className="h-8 px-2" onClick={() => handleDelete(upload._id)}>
+                    <Button variant="destructive" size="sm" className="h-8 px-2" onClick={() => handleDelete(upload?._id)}>
                       Delete
                     </Button>
                   </div>
@@ -114,7 +119,7 @@ export function RecentUploads() {
         )}
       </CardContent>
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-background dark:bg-zinc-900 text-foreground dark:text-white">
           <DialogHeader>
             <DialogTitle>Data Preview</DialogTitle>
           </DialogHeader>
@@ -123,19 +128,25 @@ export function RecentUploads() {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr>
-                    {Object.keys(previewData[0] || {}).map((key) => (
-                      <th key={key} className="px-2 py-1 border-b bg-muted text-left">{key}</th>
-                    ))}
+                    {previewData && previewData.length > 0 && previewData[0] ? 
+                      Object.keys(previewData[0]).map((key) => (
+                        <th key={key} className="px-2 py-1 border-b bg-muted dark:bg-zinc-800 text-left">{key}</th>
+                      ))
+                      : <th className="px-2 py-1 border-b bg-muted dark:bg-zinc-800 text-left">No data</th>
+                    }
                   </tr>
                 </thead>
                 <tbody>
-                  {previewData.map((row, i) => (
-                    <tr key={i}>
-                      {Object.values(row).map((val, j) => (
-                        <td key={j} className="px-2 py-1 border-b">{val}</td>
-                      ))}
-                    </tr>
-                  ))}
+                  {previewData && previewData.length > 0 ? 
+                    previewData.map((row, i) => (
+                      <tr key={i}>
+                        {Object.values(row).map((val, j) => (
+                          <td key={j} className="px-2 py-1 border-b">{val}</td>
+                        ))}
+                      </tr>
+                    ))
+                    : <tr><td colSpan="1" className="px-2 py-1 border-b text-center">No data available</td></tr>
+                  }
                 </tbody>
               </table>
             </div>

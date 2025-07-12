@@ -43,4 +43,21 @@ async function askGemini(prompt, data) {
   }
 }
 
-module.exports = { askGemini }; 
+// New: Generate a natural language summary of chart data
+async function askGeminiSummary(prompt, data) {
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  let userPrompt = `You are a data visualization expert. Analyze the following chart data and write a concise, business-friendly summary of the key insights, trends, and any notable findings. Avoid technical jargon.\n\n`;
+  userPrompt += prompt ? prompt + '\n' : '';
+  if (data) {
+    userPrompt += `Here is the chart data: ${JSON.stringify(data)}`;
+  }
+  const result = await model.generateContent({
+    contents: [
+      { parts: [{ text: userPrompt }] }
+    ]
+  });
+  const text = result.response.text();
+  return { text };
+}
+
+module.exports = { askGemini, askGeminiSummary }; 

@@ -1,6 +1,36 @@
 const ExcelData = require('../models/ExcelData');
 const XLSX = require('xlsx');
 const fs = require('fs');
+const crypto = require('crypto');
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '0123456789abcdef0123456789abcdef'; // 32 bytes for AES-256
+const IV_LENGTH = 16;
+
+function encrypt(text) {
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+  let encrypted = cipher.update(JSON.stringify(text));
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return iv.toString('hex') + ':' + encrypted.toString('hex');
+}
+
+function decrypt(text) {
+  if (!text || typeof text !== 'string') {
+    console.warn('Attempted to decrypt non-string or empty value:', text);
+    return []; // Return empty array for missing/undefined data
+  }
+  try {
+    const textParts = text.split(':');
+    const iv = Buffer.from(textParts.shift(), 'hex');
+    const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return JSON.parse(decrypted.toString());
+  } catch (err) {
+    console.warn('Failed to decrypt text:', err.message);
+    return []; // Return empty array on decryption failure
+  }
+}
 
 // POST /api/excel/upload
 exports.uploadExcel = async (req, res) => {
@@ -10,18 +40,29 @@ exports.uploadExcel = async (req, res) => {
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(sheet);
+    console.log('Parsed data:', data); // Debug log
     // Remove file after parsing
     fs.unlinkSync(req.file.path);
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ error: 'No data found in file. Please upload a valid Excel or CSV file with a header row.' });
+    }
+    // Extract columns and preview
+    const columns = data.length > 0 ? Object.keys(data[0]) : [];
+    const preview = data.slice(0, 10);
+    // Encrypt columns and preview
+    const encryptedColumns = encrypt(columns);
+    const encryptedPreview = encrypt(preview);
     // Save to DB
     const excelData = new ExcelData({
       userId: req.user.userId,
       projectId: req.body.projectId || req.query.projectId,
       filename: req.file.originalname,
-      data,
+      columns: encryptedColumns,
+      preview: encryptedPreview,
     });
     await excelData.save();
-    // Return preview (first 10 rows)
-    res.json({ preview: data.slice(0, 10), id: excelData._id });
+    // Return preview (first 10 rows, decrypted)
+    res.json({ preview, id: excelData._id, columns });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to upload and parse file' });
@@ -32,9 +73,15 @@ exports.uploadExcel = async (req, res) => {
 exports.getRecentUploads = async (req, res) => {
   try {
     const uploads = await ExcelData.find({ userId: req.user.userId })
-      .sort({ uploadDate: -1 })
+      .sort({ createdAt: -1 })
       .limit(5);
-    res.json(uploads);
+    // Decrypt columns and preview for each upload
+    const result = uploads.map(upload => ({
+      ...upload.toObject(),
+      columns: decrypt(upload.columns),
+      preview: decrypt(upload.preview),
+    }));
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch recent uploads' });
@@ -47,7 +94,14 @@ exports.getUploadById = async (req, res) => {
     const { id } = req.params;
     const upload = await ExcelData.findOne({ _id: id, userId: req.user.userId });
     if (!upload) return res.status(404).json({ error: 'Upload not found' });
-    res.json(upload);
+    // Decrypt columns and preview
+    const columns = decrypt(upload.columns);
+    const preview = decrypt(upload.preview);
+    res.json({
+      ...upload.toObject(),
+      columns,
+      preview,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch upload' });
@@ -104,30 +158,38 @@ exports.getAnalyticsSummary = async (req, res) => {
   }
 };
 
-// GET /api/excel/analytics/team
-exports.getTeamAnalytics = async (req, res) => {
+// GET /api/excel/project/:projectId
+exports.getUploadsByProject = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const Team = require('../models/Team');
-    const userTeams = await Team.find({ 'members.userId': userId });
-    const teamIds = userTeams.map(t => t._id);
-    // Aggregate uploads by team
-    const teamAgg = await ExcelData.aggregate([
-      { $match: { projectId: { $ne: null } } },
-      { $lookup: {
-        from: 'projects',
-        localField: 'projectId',
-        foreignField: '_id',
-        as: 'project',
-      }},
-      { $unwind: '$project' },
-      { $match: { 'project.teams': { $in: teamIds } } },
-      { $unwind: '$project.teams' },
-      { $group: { _id: '$project.teams', count: { $sum: 1 } } },
-    ]);
-    res.json({ teamAgg });
+    const { projectId } = req.params;
+    const uploads = await ExcelData.find({ projectId }).populate('userId', 'name avatar');
+    // Decrypt columns and preview for each upload, skip if decryption fails
+    const result = uploads.map(upload => {
+      try {
+        const columns = decrypt(upload.columns || '');
+        const preview = decrypt(upload.preview || '');
+        
+        // Only include files that have valid columns
+        if (columns && Array.isArray(columns) && columns.length > 0) {
+          return {
+            ...upload.toObject(),
+            columns,
+            preview,
+          };
+        } else {
+          console.warn('Upload has no valid columns:', upload._id);
+          return null;
+        }
+      } catch (err) {
+        console.error('Failed to decrypt upload', upload._id, err.message);
+        return null;
+      }
+    }).filter(Boolean);
+    
+    console.log(`Returning ${result.length} valid files for project ${projectId}`);
+    res.json(result);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to fetch team analytics' });
+    res.status(500).json({ error: 'Failed to fetch uploads for project' });
   }
 }; 

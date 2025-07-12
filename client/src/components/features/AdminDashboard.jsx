@@ -40,7 +40,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="rounded-lg border p-6 text-sm text-muted-foreground">
+      <div className="rounded-lg border p-6 text-sm text-muted-foreground bg-card dark:bg-zinc-900">
         <p>
           This is a placeholder Admin Dashboard. Hook it up to your backend to display real usage metrics, system logs,
           and user management tools.

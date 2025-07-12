@@ -24,8 +24,8 @@ import { Bar } from 'react-chartjs-2';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useRef } from 'react';
-import { useProjectCollab } from '@/hooks/useProjectCollab';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { addUploadedFile } from '@/store/slices/uploadedFilesSlice';
 
 // Helper to detect numeric columns
 function isNumericColumn(data, key) {
@@ -90,17 +90,8 @@ export function UploadSection() {
   const user = useSelector(state => state.auth.user);
   // Assume projectId is available (e.g., from props, context, or selected project)
   const projectId = null; // TODO: Replace with actual project ID
-  const [presenceList, setPresenceList] = useState([]);
-  const { sendDataEdit, sendChartEdit, sendPresence } = useProjectCollab(projectId, user, {
-    onDataEdit: (change) => {
-      // Apply incoming data changes (e.g., update previewData, sheets, etc.)
-      // Example: setPreviewData(change.previewData);
-    },
-    onChartEdit: (chart) => {
-      // Handle incoming chart edits (e.g., update chart list)
-    },
-    onPresence: (presence) => setPresenceList(presence),
-  });
+
+  const dispatch = useDispatch();
 
   // Compute a smart chart title for export
   let chartTitle = '';
@@ -179,8 +170,24 @@ export function UploadSection() {
         name,
         data: XLSX.utils.sheet_to_json(workbook.Sheets[name]),
       }));
+      console.log("allSheets before dispatch:", allSheets);
       setSheets(allSheets);
       setPreviewData(allSheets[0]?.data.slice(0, 10) || []);
+      // Show chart options if columns are found
+      if (allSheets[0]?.data && Object.keys(allSheets[0].data[0] || {}).length > 0) {
+        setShowChartOptions(true);
+        // Dispatch to Redux for global access (store full data, not just preview)
+        const fileObj = {
+          name: file.name,
+          sheets: allSheets,
+          uploadedAt: new Date().toISOString(),
+        };
+        console.log("Dispatching fileObj to Redux:", fileObj);
+        dispatch(addUploadedFile(fileObj));
+      } else {
+        setShowChartOptions(false);
+        setError("No columns found in this file. Please upload a valid Excel or CSV file with a header row.");
+      }
     };
     reader.readAsArrayBuffer(file);
   };
@@ -376,25 +383,7 @@ export function UploadSection() {
     }
   };
 
-  // When Excel data is edited, broadcast the change
-  const handleDataEdit = (change) => {
-    // Apply local change
-    // ...
-    sendDataEdit(change);
-  };
-  // When a chart is created/edited, broadcast the change
-  const handleChartEdit = (chart) => {
-    // Apply local change
-    // ...
-    sendChartEdit(chart);
-  };
-  // Broadcast presence on mount
-  useEffect(() => {
-    if (projectId && user) {
-      sendPresence({ user });
-    }
-    // eslint-disable-next-line
-  }, [projectId, user]);
+
 
   return (
     <Card className="border-dashed border-2">
@@ -403,19 +392,11 @@ export function UploadSection() {
           <FileSpreadsheet className="h-5 w-5" />
           <CardTitle>Upload Excel File</CardTitle>
         </div>
-        {presenceList.length > 0 && (
-          <div className="flex gap-2 items-center text-xs text-muted-foreground">
-            <span>Present:</span>
-            {presenceList.map((p, i) => (
-              <span key={i} className="bg-blue-100 text-blue-700 rounded px-2 py-1">{p.user?.name || 'User'}</span>
-            ))}
-          </div>
-        )}
       </CardHeader>
       <CardContent>
         <div
           className={`relative border-2 border-dashed rounded-lg p-12 text-center transition-colors duration-200 ${
-            dragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-muted-foreground/50"
+            dragActive ? "border-primary bg-primary/5 dark:bg-primary/20" : "border-muted-foreground/25 hover:border-muted-foreground/50 bg-background dark:bg-zinc-900"
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -423,7 +404,7 @@ export function UploadSection() {
           onDrop={handleDrop}
         >
           <div className="space-y-4">
-            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+            <div className="mx-auto w-16 h-16 bg-muted dark:bg-zinc-800 rounded-full flex items-center justify-center">
               <Upload className="h-8 w-8 text-muted-foreground" />
             </div>
             <div>
@@ -447,10 +428,10 @@ export function UploadSection() {
         </div>
 
         {selectedFile && (
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg border">
+          <div className="mt-6 p-4 bg-muted/50 dark:bg-zinc-800 rounded-lg border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-background rounded">
+                <div className="p-2 bg-background dark:bg-zinc-900 rounded">
                   <FileSpreadsheet className="h-4 w-4" />
                 </div>
                 <div>
@@ -482,7 +463,7 @@ export function UploadSection() {
 
         {uploadSuccess && (
           <Alert className="mt-4 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-300" />
             <AlertDescription className="text-green-800 dark:text-green-200">
               File uploaded successfully!
             </AlertDescription>

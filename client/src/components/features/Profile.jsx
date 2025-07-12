@@ -216,13 +216,13 @@ export default function Profile() {
           />
         )}
         <div>
-          <div className="text-lg font-semibold">{user.name}</div>
-          <div className="text-gray-600">{user.email}</div>
-          <div className="text-xs text-gray-500">{user.role}</div>
+          <div className="text-lg font-semibold text-foreground dark:text-white">{user.name}</div>
+          <div className="text-muted-foreground">{user.email}</div>
+          <div className="text-xs text-muted-foreground">{user.role}</div>
         </div>
         <div className="ml-auto flex flex-col gap-2">
           <button
-            className="text-sm text-blue-600 underline"
+            className="text-sm text-primary underline"
             onClick={() => fileInputRef.current.click()}
             disabled={avatarUploading}
           >
@@ -237,7 +237,7 @@ export default function Profile() {
             disabled={avatarUploading}
           />
           <button
-            className="text-sm text-red-500 underline"
+            className="text-sm text-destructive underline"
             onClick={handleAvatarRemove}
             disabled={avatarUploading}
           >
@@ -245,7 +245,7 @@ export default function Profile() {
           </button>
           {avatarFile && (
             <button
-              className="text-xs bg-blue-600 text-white rounded px-2 py-1 mt-1"
+              className="text-xs bg-primary text-primary-foreground rounded px-2 py-1 mt-1"
               onClick={handleAvatarUpload}
               disabled={avatarUploading}
             >
@@ -301,7 +301,7 @@ export default function Profile() {
           <div className="flex gap-2">
             <button
               type="submit"
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+              className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
             >
               Save
             </button>
@@ -321,7 +321,7 @@ export default function Profile() {
           <div className="mb-2"><span className="font-medium">Bio:</span> {user.bio || <span className="text-gray-400">(none)</span>}</div>
           <div className="mb-2"><span className="font-medium">Location:</span> {user.location || <span className="text-gray-400">(none)</span>}</div>
           <button
-            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
             onClick={handleEdit}
           >
             Edit Profile
@@ -353,7 +353,7 @@ export default function Profile() {
           />
           <button
             type="submit"
-            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
           >
             Change Password
           </button>

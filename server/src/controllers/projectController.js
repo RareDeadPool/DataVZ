@@ -6,51 +6,23 @@ exports.createProject = async (req, res) => {
     if (!req.user || !req.user.userId) {
       return res.status(401).json({ error: 'Unauthorized: user not found in request' });
     }
-    const { name, description, category, collaborators, teams } = req.body;
+    const { name, description, category } = req.body;
     const userId = req.user.userId;
-    // Ensure collaborators is an array of objects with userId and role
-    let safeCollaborators = [];
-    if (Array.isArray(collaborators)) {
-      safeCollaborators = collaborators.map(c => {
-        if (typeof c === 'string') {
-          return { userId: c, role: 'editor' };
-        } else if (typeof c === 'object' && c.userId) {
-          return { userId: c.userId, role: c.role || 'editor' };
-        }
-        return null;
-      }).filter(Boolean);
-    }
-    // Only allow creation if user is not already a member/collaborator/owner of a project with the same name or for the same team
+    
+    // Check if user already has a project with this name
     const existingProject = await Project.findOne({
       name,
-      $or: [
-        { owner: userId },
-        { 'collaborators.userId': userId },
-        { teams: { $in: teams || [] } }
-      ]
+      owner: userId
     });
     if (existingProject) {
-      return res.status(403).json({ error: 'You already have access to a project with this name or team.' });
+      return res.status(403).json({ error: 'You already have a project with this name.' });
     }
-    // Only allow creation if user is owner/admin of the team (if teams provided)
-    if (teams && teams.length > 0) {
-      const Team = require('../models/Team');
-      const userTeams = await Team.find({ _id: { $in: teams }, 'members.userId': userId });
-      const isOwnerOrAdmin = userTeams.some(team => {
-        const member = team.members.find(m => m.userId.toString() === userId.toString());
-        return member && (member.role === 'owner' || member.role === 'admin');
-      });
-      if (!isOwnerOrAdmin) {
-        return res.status(403).json({ error: 'Only team owners or admins can create projects for this team.' });
-      }
-    }
+    
     const project = await Project.create({
       name,
       description,
       category,
       owner: userId,
-      collaborators: safeCollaborators,
-      teams: teams || [],
     });
     res.status(201).json(project);
   } catch (err) {
@@ -59,71 +31,50 @@ exports.createProject = async (req, res) => {
   }
 };
 
-// Get all projects for the logged-in user (owner or collaborator)
+// Get all projects for the logged-in user
 exports.getProjects = async (req, res) => {
   try {
     if (!req.user || !req.user.userId) {
       return res.status(401).json({ error: 'Unauthorized: user not found in request' });
     }
     const userId = req.user.userId;
-    let Team;
-    try {
-      Team = require('../models/Team');
-    } catch (e) {
-      console.error('Failed to load Team model:', e);
-      return res.status(500).json({ error: 'Server misconfiguration: Team model missing' });
-    }
-    const userTeams = await Team.find({ 'members.userId': userId }).select('_id role');
-    const teamIds = userTeams.map(t => t._id);
-    // Find projects where user is owner, collaborator, or has a team role
-    const projects = await Project.find({
-      $or: [
-        { owner: userId },
-        { 'collaborators.userId': userId },
-        { 'teamRoles.teamId': { $in: teamIds } }
-      ]
-    });
-    // Attach userRole for each project
-    const projectsWithRole = projects.map(project => {
-      const role = getUserProjectRole(project, userId, userTeams);
-      return { ...project.toObject(), userRole: role };
-    });
-    res.json(projectsWithRole);
+    const projects = await Project.find({ owner: userId })
+      .populate('owner', 'name email avatar')
+      .sort({ updatedAt: -1 });
+    res.json(projects);
   } catch (err) {
     console.error('Error in getProjects:', err);
-    res.status(500).json({ error: 'Failed to fetch projects', details: err.message });
+    res.status(500).json({ error: 'Failed to fetch projects' });
   }
 };
 
-// Helper to get user role for a project
-function getUserProjectRole(project, userId, userTeams) {
-  if (project.owner.toString() === userId.toString()) return 'owner';
-  // Check collaborators
-  const collab = (project.collaborators || []).find(c => c.userId.toString() === userId.toString());
-  if (collab) return collab.role;
-  // Check team roles
-  if (userTeams && userTeams.length > 0 && project.teamRoles && project.teamRoles.length > 0) {
-    for (const team of userTeams) {
-      const teamRole = project.teamRoles.find(tr => tr.teamId.toString() === team._id.toString());
-      if (teamRole) return teamRole.role;
-    }
-  }
-  return null;
-}
-
-// Get a single project by ID (if user is owner or collaborator)
+// Get a single project by ID (if user is owner)
 exports.getProjectById = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const Team = require('../models/Team');
-    const userTeams = await Team.find({ 'members.userId': userId }).select('_id role');
-    // Populate teams field
-    const project = await Project.findById(req.params.id).populate('teams');
-    if (!project) return res.status(404).json({ error: 'Project not found' });
-    const role = getUserProjectRole(project, userId, userTeams);
-    if (!role) return res.status(403).json({ error: 'You do not have access to this project.' });
-    res.json({ ...project.toObject(), userRole: role });
+    console.log('🔍 getProjectById - User ID:', userId);
+    console.log('🔍 getProjectById - Project ID:', req.params.id);
+    
+    const project = await Project.findById(req.params.id)
+      .populate('owner', 'name email avatar');
+    
+    if (!project) {
+      console.log('❌ Project not found');
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    console.log('🔍 getProjectById - Project owner:', project.owner?._id || project.owner);
+    
+    // Check if user is the owner
+    if (project.owner._id.toString() !== userId.toString()) {
+      console.log('❌ Access denied - user is not owner');
+      return res.status(403).json({ error: 'You do not have access to this project.' });
+    }
+    
+    console.log('✅ Access granted - user is owner');
+    res.json({ ...project.toObject(), userRole: 'owner' });
   } catch (err) {
+    console.error('❌ Error in getProjectById:', err);
     res.status(500).json({ error: 'Failed to fetch project' });
   }
 };
@@ -132,20 +83,13 @@ exports.getProjectById = async (req, res) => {
 exports.updateProject = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const Team = require('../models/Team');
-    const userTeams = await Team.find({ 'members.userId': userId }).select('_id role');
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
-    const role = getUserProjectRole(project, userId, userTeams);
-    if (role !== 'owner' && role !== 'editor' && role !== 'admin') {
-      return res.status(403).json({ error: 'Only owner, admin, or editor can update this project.' });
+    
+    if (project.owner.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Only the project owner can update this project.' });
     }
-    // Only owner can manage team
-    if (req.body.teams || req.body.teamRoles) {
-      if (role !== 'owner') {
-        return res.status(403).json({ error: 'Only owner can manage teams.' });
-      }
-    }
+    
     const updated = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updated);
   } catch (err) {
@@ -157,51 +101,45 @@ exports.updateProject = async (req, res) => {
 exports.deleteProject = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const project = await Project.findOneAndDelete({ _id: req.params.id, owner: userId });
-    if (!project) return res.status(404).json({ error: 'Project not found or not authorized' });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete project' });
-  }
-};
-
-// Add a team to a project
-exports.addTeamToProject = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const project = await Project.findOne({ _id: req.params.id, owner: userId });
-    if (!project) return res.status(404).json({ error: 'Project not found or not authorized' });
-
-    const { teamId } = req.body;
-    if (!teamId) return res.status(400).json({ error: 'teamId is required' });
-
-    // Avoid duplicates
-    if (!project.teams) project.teams = [];
-    if (!project.teams.includes(teamId)) {
-      project.teams.push(teamId);
-      await project.save();
+    const projectId = req.params.id;
+    
+    console.log(`Attempting to delete project ${projectId} by user ${userId}`);
+    
+    const project = await Project.findById(projectId);
+    if (!project) {
+      console.log(`Project ${projectId} not found in database`);
+      return res.status(404).json({ error: 'Project not found' });
     }
-
-    res.json(project);
+    
+    if (project.owner.toString() !== userId.toString()) {
+      console.log(`User ${userId} is not the owner of project ${projectId}. Owner is ${project.owner}`);
+      return res.status(403).json({ error: 'Only the project owner can delete this project' });
+    }
+    
+    // Clean up related data
+    const Chart = require('../models/Chart');
+    const ExcelData = require('../models/ExcelData');
+    
+    // Delete all charts for this project
+    const deletedCharts = await Chart.deleteMany({ projectId: projectId });
+    console.log(`Deleted ${deletedCharts.deletedCount} charts for project ${projectId}`);
+    
+    // Delete all uploaded files for this project
+    const deletedFiles = await ExcelData.deleteMany({ projectId: projectId });
+    console.log(`Deleted ${deletedFiles.deletedCount} uploaded files for project ${projectId}`);
+    
+    // Delete the project
+    await Project.findByIdAndDelete(projectId);
+    console.log(`Project ${projectId} deleted successfully by user ${userId}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Project deleted successfully',
+      deletedCharts: deletedCharts.deletedCount,
+      deletedFiles: deletedFiles.deletedCount
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to add team to project' });
-  }
-};
-
-// Add a controller to set (replace) all teams for a project
-exports.setTeamsForProject = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const project = await Project.findOne({ _id: req.params.id, owner: userId });
-    if (!project) return res.status(404).json({ error: 'Project not found or not authorized' });
-
-    const { teamIds } = req.body;
-    if (!Array.isArray(teamIds)) return res.status(400).json({ error: 'teamIds (array) is required' });
-
-    project.teams = teamIds;
-    await project.save();
-    res.json(project);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to set teams for project' });
+    console.error('Error in deleteProject:', err);
+    res.status(500).json({ error: 'Failed to delete project', details: err.message });
   }
 }; 

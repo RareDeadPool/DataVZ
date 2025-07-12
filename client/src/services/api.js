@@ -1,107 +1,120 @@
-export async function uploadExcelFile(file, token) {
+import axios from 'axios';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+
+const api = axios.create({
+  baseURL: API_BASE,
+});
+
+// Attach token to every request if present
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+export default api;
+
+export async function uploadExcelFile(file, projectId = null) {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await fetch('/api/excel/upload', {
-    method: 'POST',
+  if (projectId) {
+    formData.append('projectId', projectId);
+  }
+  const res = await api.post('/excel/upload', formData, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data',
     },
-    body: formData,
   });
-  if (!res.ok) throw new Error('Upload failed');
-  return await res.json();
+  return res.data;
 }
 
-export async function getRecentUploads(token) {
-  const res = await fetch('/api/excel/recent', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Failed to fetch recent uploads');
-  return await res.json();
+export async function getRecentUploads() {
+  const res = await api.get('/excel/recent');
+  return res.data;
 }
 
 export async function deleteUpload(id, token) {
-  const res = await fetch(`/api/excel/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Failed to delete upload');
-  return await res.json();
+  const res = await api.delete(`/excel/${id}`);
+  return res.data;
 }
 
 export async function getUploadById(id, token) {
-  const res = await fetch(`/api/excel/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Failed to fetch upload');
-  return await res.json();
+  const res = await api.get(`/excel/${id}`);
+  return res.data;
 }
 
-export async function getPendingInvitations(token) {
-  const res = await fetch('/api/teams/invitations/pending', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Failed to fetch pending invitations');
-  return await res.json();
+export async function getUploadsByProject(projectId) {
+  const res = await api.get(`/excel/project/${projectId}`);
+  return res.data;
 }
 
-export async function respondToInvitation(teamId, status, token) {
-  const res = await fetch('/api/teams/invitation/respond', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ teamId, status }),
-  });
-  if (!res.ok) throw new Error('Failed to respond to invitation');
-  return await res.json();
+export async function getProjectById(projectId) {
+  const res = await api.get(`/projects/${projectId}`);
+  return res.data;
 }
+
+export async function getCharts(projectId = null) {
+  const url = projectId ? `/charts?projectId=${projectId}` : '/charts';
+  const res = await api.get(url);
+  return res.data;
+}
+
+export async function createChart(chartData) {
+  const res = await api.post('/charts', chartData);
+  return res.data;
+}
+
+export async function updateChart(chartId, chartData) {
+  const res = await api.put(`/charts/${chartId}`, chartData);
+  return res.data;
+}
+
+export async function deleteChart(chartId) {
+  const res = await api.delete(`/charts/${chartId}`);
+  return res.data;
+}
+
+
+
+
 
 export async function askGeminiAI({ prompt, data }) {
-  const res = await fetch('/api/ai/ask', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, data }),
-  });
-  if (!res.ok) throw new Error('AI request failed');
-  return await res.json();
+  const res = await api.post('/ai/ask', { prompt, data });
+  return res.data;
 }
 
 export async function saveChartHistory({ prompt, chartConfig, favorite }) {
-  const res = await fetch('/api/ai/history', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, chartConfig, favorite }),
-  });
-  if (!res.ok) throw new Error('Failed to save chart history');
-  return await res.json();
+  const res = await api.post('/ai/history', { prompt, chartConfig, favorite });
+  return res.data;
 }
 
 export async function fetchChartHistory() {
-  const res = await fetch('/api/ai/history');
-  if (!res.ok) throw new Error('Failed to fetch chart history');
-  return await res.json();
+  const res = await api.get('/ai/history');
+  return res.data;
 }
 
 export async function toggleFavoriteChart(id) {
-  const res = await fetch(`/api/ai/history/${id}/favorite`, {
-    method: 'POST',
-  });
-  if (!res.ok) throw new Error('Failed to toggle favorite');
-  return await res.json();
+  const res = await api.post(`/ai/history/${id}/favorite`);
+  return res.data;
 }
 
 export async function generateShareLink(id) {
-  const res = await fetch(`/api/ai/history/${id}/share`, {
-    method: 'POST',
-  });
-  if (!res.ok) throw new Error('Failed to generate share link');
-  return await res.json();
+  const res = await api.post(`/ai/history/${id}/share`);
+  return res.data;
 }
 
 export async function fetchSharedChart(shareId) {
-  const res = await fetch(`/api/ai/share/${shareId}`);
-  if (!res.ok) throw new Error('Failed to fetch shared chart');
-  return await res.json();
+  const res = await api.get(`/ai/share/${shareId}`);
+  return res.data;
+}
+
+export async function askGeminiSummary({ prompt, data }) {
+  const res = await api.post('/ai/summary', { prompt, data });
+  return res.data;
 } 

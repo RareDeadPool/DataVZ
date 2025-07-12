@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useSelector } from 'react-redux';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const uploadedFiles = useSelector(state => state.uploadedFiles.files);
 
   const handleProjectFormChange = e => setProjectForm(f => ({ ...f, [e.target.name]: e.target.value }));
   const handleFileChange = e => setFile(e.target.files[0]);
@@ -56,11 +58,11 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 p-6 bg-background min-h-screen">
+    <div className="flex-1 p-6 bg-background dark:bg-zinc-900 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center mb-4">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground dark:text-white">Dashboard</h1>
             <p className="text-muted-foreground">Manage your Excel uploads and data processing</p>
           </div>
           <Button onClick={() => setShowModal(true)} variant="default">New Project & Upload Data</Button>

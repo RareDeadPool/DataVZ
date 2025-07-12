@@ -1,17 +1,26 @@
 const Team = require('../models/Team');
 const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
+const Project = require('../models/Project');
 
 // Create a new team
 exports.createTeam = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, projectId } = req.body;
     const userId = req.user.userId; // Fix: use userId from JWT payload
     const team = new Team({
       name,
       members: [{ userId, role: 'owner' }],
     });
     await team.save();
+    // If projectId is provided, add this team to the project's teams array
+    if (projectId) {
+      await Project.findByIdAndUpdate(
+        projectId,
+        { $addToSet: { teams: team._id } },
+        { new: true }
+      );
+    }
     // Populate members.userId before returning
     const populatedTeam = await Team.findById(team._id).populate('members.userId', 'name email');
     res.status(201).json(populatedTeam);
@@ -24,7 +33,22 @@ exports.createTeam = async (req, res) => {
 exports.getTeams = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const teams = await Team.find({ 'members.userId': userId }).populate('members.userId', 'name email');
+    // Populate members.userId and invitations.invitedBy
+    let teams = await Team.find({ 'members.userId': userId })
+      .populate('members.userId', 'name email')
+      .populate('invitations.invitedBy', 'name email');
+    // For each team, add an 'owner' field with the full user object
+    teams = await Promise.all(teams.map(async (team) => {
+      const ownerMember = team.members.find(m => m.role === 'owner');
+      let owner = null;
+      if (ownerMember) {
+        owner = await User.findById(ownerMember.userId).select('name email');
+      }
+      // Convert to object and add owner
+      const teamObj = team.toObject();
+      teamObj.owner = owner;
+      return teamObj;
+    }));
     res.json(teams);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -34,10 +58,19 @@ exports.getTeams = async (req, res) => {
 // Get a single team by ID
 exports.getTeamById = async (req, res) => {
   try {
-    const team = await Team.findById(req.params.id)
-      .populate('members.userId', 'name email');
+    let team = await Team.findById(req.params.id)
+      .populate('members.userId', 'name email')
+      .populate('invitations.invitedBy', 'name email');
     if (!team) return res.status(404).json({ error: 'Team not found' });
-    res.json(team);
+    // Add owner field
+    const ownerMember = team.members.find(m => m.role === 'owner');
+    let owner = null;
+    if (ownerMember) {
+      owner = await User.findById(ownerMember.userId).select('name email');
+    }
+    const teamObj = team.toObject();
+    teamObj.owner = owner;
+    res.json(teamObj);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -121,15 +154,25 @@ exports.inviteMember = async (req, res) => {
 exports.respondToInvitation = async (req, res) => {
   try {
     const { teamId, status } = req.body; // status: 'accepted' or 'rejected'
+    if (!req.user) {
+      console.error('No req.user in respondToInvitation');
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
     const team = await Team.findById(teamId);
-    if (!team) return res.status(404).json({ error: 'Team not found' });
+    if (!team) {
+      console.error('Team not found for teamId:', teamId);
+      return res.status(404).json({ error: 'Team not found' });
+    }
     const invitation = team.invitations.find(inv => inv.email === req.user.email && inv.status === 'pending');
-    if (!invitation) return res.status(404).json({ error: 'Invitation not found' });
+    if (!invitation) {
+      console.error('Invitation not found for user:', req.user.email, 'in team:', teamId);
+      return res.status(404).json({ error: 'Invitation not found' });
+    }
     invitation.status = status;
     if (status === 'accepted') {
       // Prevent duplicate member entries
       if (!team.members.some(m => m.userId.toString() === req.user.userId)) {
-        team.members.push({ userId: req.user.userId, role: 'member' });
+        team.members.push({ userId: req.user.userId, role: 'member' }); // Use a valid role
       }
     }
     await team.save();
@@ -137,7 +180,7 @@ exports.respondToInvitation = async (req, res) => {
     const updatedTeam = await Team.findById(teamId).populate('members.userId', 'name email');
     res.json({ message: `Invitation ${status}`, team: updatedTeam });
   } catch (err) {
-    console.error('Error in respondToInvitation:', err);
+    console.error('Error in respondToInvitation:', err, 'req.user:', req.user, 'teamId:', req.body.teamId);
     res.status(500).json({ error: err.message });
   }
 };
@@ -194,7 +237,7 @@ exports.getPendingInvitations = async (req, res) => {
     const email = req.user.email;
     const teams = await Team.find({
       'invitations': { $elemMatch: { email, status: 'pending' } }
-    }).select('name _id invitations');
+    }).populate('invitations.invitedBy', 'name email').select('name _id invitations');
     // Filter invitations to only include the relevant one for this user
     const pendingInvites = teams.map(team => ({
       teamId: team._id,
@@ -204,5 +247,53 @@ exports.getPendingInvitations = async (req, res) => {
     res.json(pendingInvites);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getTeamByProject = async (req, res) => {
+  try {
+    // Debug: Log projectId and project.teams
+    const project = await Project.findById(req.params.projectId);
+    if (!project || !project.teams || project.teams.length === 0) {
+      console.warn('No teams found for project', req.params.projectId, 'project.teams:', project?.teams);
+      return res.status(404).json({ error: 'No team found for this project. If you expect teams, run /api/teams/fix-project-links to relink teams to projects.' });
+    }
+    // Return all teams for this project, populated with members
+    const teams = await Promise.all(
+      project.teams.map(teamId =>
+        Team.findById(teamId).populate('members.userId', 'name email avatar')
+      )
+    );
+    res.json(teams.filter(Boolean));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch team(s) for project' });
+  }
+};
+
+exports.fixProjectTeamLinks = async (req, res) => {
+  try {
+    // Optionally, require an admin or secret for safety
+    // if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+    const Project = require('../models/Project');
+    const Team = require('../models/Team');
+    const projects = await Project.find({});
+    const teams = await Team.find({});
+    let updated = 0;
+    for (const team of teams) {
+      // Find all projects that should include this team (by convention, or if you have a mapping)
+      // Here, we add the team to any project where the team is not already present and the user is a member
+      for (const project of projects) {
+        // If any team member is also a project collaborator or owner, or if you want to link all teams to all projects, adjust logic here
+        // For now, if the team is not in the project's teams array, add it
+        if (!project.teams.map(t => t.toString()).includes(team._id.toString())) {
+          project.teams.push(team._id);
+          await project.save();
+          updated++;
+        }
+      }
+    }
+    res.json({ message: `Linked teams to projects. Updated ${updated} project(s).` });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fix project-team links' });
   }
 }; 

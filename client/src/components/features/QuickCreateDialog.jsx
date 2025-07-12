@@ -121,7 +121,7 @@ export function QuickCreateDialog({ open, onOpenChange }) {
               return (
                 <Card
                   key={option.id}
-                  className="cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50"
+                  className="cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50 bg-card dark:bg-zinc-900 text-foreground dark:text-white"
                   onClick={() => handleOptionSelect(option.id)}
                 >
                   <CardContent className="p-4">
@@ -131,9 +131,9 @@ export function QuickCreateDialog({ open, onOpenChange }) {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium">{option.title}</h3>
+                          <h3 className="font-medium text-foreground dark:text-white">{option.title}</h3>
                           {option.recommended && (
-                            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
+                            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary dark:border-primary/30">
                               Recommended
                             </Badge>
                           )}
@@ -161,7 +161,7 @@ export function QuickCreateDialog({ open, onOpenChange }) {
                 return (
                   <Card
                     key={template.id}
-                    className="cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50"
+                    className="cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/50 bg-card dark:bg-zinc-900 text-foreground dark:text-white"
                     onClick={() => handleTemplateSelect(template.id)}
                   >
                     <CardHeader className="pb-3">

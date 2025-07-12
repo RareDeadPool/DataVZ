@@ -3,12 +3,14 @@ const Chart = require('../models/Chart');
 // Create a new chart
 exports.createChart = async (req, res) => {
   try {
-    const { projectId, type, data } = req.body;
+    const { projectId, type, data, xKey, yKey } = req.body;
     const chart = await Chart.create({
       projectId,
       userId: req.user.userId,
       type,
       data,
+      xKey,
+      yKey,
     });
     res.status(201).json(chart);
   } catch (err) {
@@ -20,7 +22,10 @@ exports.createChart = async (req, res) => {
 exports.getCharts = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const charts = await Chart.find({ userId });
+    const { projectId } = req.query;
+    const filter = { userId };
+    if (projectId) filter.projectId = projectId;
+    const charts = await Chart.find(filter);
     res.json(charts);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch charts' });

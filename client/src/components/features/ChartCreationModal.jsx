@@ -1,419 +1,297 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../ui/dialog';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
-import { Badge } from '../../ui/badge';
-import { BarChart3, LineChart, PieChart, ScatterChart, Upload, FileSpreadsheet } from 'lucide-react';
-import { useSocket } from '../../hooks/useSocket';
-import { useSelector } from 'react-redux';
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { BarChart3, LineChart, PieChart, TrendingUp, ScatterChart, Radar } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Avatar } from '@/components/ui/avatar';
 
-const chartTypes = [
-  {
-    id: "bar",
-    name: "Bar Chart",
-    description: "Compare categories with rectangular bars",
-    icon: BarChart3,
-    recommended: ["categorical", "comparison"],
-  },
-  {
-    id: "line",
-    name: "Line Chart",
-    description: "Show trends over time",
-    icon: LineChart,
-    recommended: ["time-series", "trends"],
-  },
-  {
-    id: "pie",
-    name: "Pie Chart",
-    description: "Show parts of a whole",
-    icon: PieChart,
-    recommended: ["proportions", "percentages"],
-  },
-  {
-    id: "scatter",
-    name: "Scatter Plot",
-    description: "Show relationships between variables",
-    icon: ScatterChart,
-    recommended: ["correlation", "relationships"],
-  },
-]
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-export function ChartCreationModal({ open, onOpenChange }) {
-  const [step, setStep] = useState(1)
-  const [selectedFile, setSelectedFile] = useState("")
-  const [selectedChart, setSelectedChart] = useState("")
-  const [chartConfig, setChartConfig] = useState({
-    title: "",
-    xAxis: "",
-    yAxis: "",
-    color: "#3b82f6",
-  })
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('');
-  const [projectForm, setProjectForm] = useState({ name: '', description: '', category: '' });
-  const [creatingProject, setCreatingProject] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  const user = useSelector(state => state.auth.user);
-  // Real-time collaboration: join project room and sync chartConfig
-  const { sendEdit, sendPresence } = useSocket(selectedProject, user, {
-    onEdit: (data) => setChartConfig(data),
-    onPresence: (presence) => setPresenceList(presence),
+export function ChartCreationModal({ 
+  open, 
+  onOpenChange, 
+  editingChart, 
+  onChartSave, 
+  availableData, 
+  uploadedFiles, 
+  projectId // <-- add projectId as a prop
+}) {
+  const [chartData, setChartData] = useState({
+    title: '',
+    type: 'bar',
+    xKey: '',
+    yKey: '',
+    data: availableData
   });
-  const [presenceList, setPresenceList] = useState([]);
 
-  useEffect(() => {
-    if (open) {
-      const fetchProjects = async () => {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/projects`, { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) setProjects(await res.json());
-      };
-      fetchProjects();
-    }
-  }, [open]);
+  const [selectedFile, setSelectedFile] = useState(0);
+  const [selectedSheet, setSelectedSheet] = useState(0);
+  const [error, setError] = useState("");
+  const [filesWithData, setFilesWithData] = useState(uploadedFiles);
 
-  // Broadcast chartConfig changes
+  // Patch: Ensure file sheet data is loaded for column selection
   useEffect(() => {
-    if (selectedProject && user) {
-      sendPresence({ user });
+    async function fetchFileDataIfNeeded() {
+      if (!open || !uploadedFiles[selectedFile]) return;
+      const file = uploadedFiles[selectedFile];
+      // If no sheets or no data, fetch file details
+      if (!file.sheets || !file.sheets[selectedSheet] || !Array.isArray(file.sheets[selectedSheet].data) || file.sheets[selectedSheet].data.length === 0) {
+        try {
+          const token = localStorage.getItem('token');
+          const id = file._id || file.id;
+          const res = await fetch(`/api/excel/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const fileDetails = await res.json();
+            // Patch the uploadedFiles array with the new data
+            const newFiles = [...uploadedFiles];
+            newFiles[selectedFile] = { ...file, ...fileDetails };
+            setFilesWithData(newFiles);
+          }
+        } catch (err) {
+          // Optionally handle error
+        }
+      } else {
+        setFilesWithData(uploadedFiles);
+      }
     }
+    fetchFileDataIfNeeded();
     // eslint-disable-next-line
-  }, [selectedProject, user]);
+  }, [open, selectedFile, selectedSheet, uploadedFiles]);
 
-  // When chartConfig changes, broadcast to others
   useEffect(() => {
-    if (selectedProject && user) {
-      sendEdit(chartConfig);
-    }
-    // eslint-disable-next-line
-  }, [chartConfig]);
-
-  const handleNext = () => {
-    if (step < 3) setStep(step + 1)
-  }
-
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1)
-  }
-
-  const handleProjectFormChange = e => setProjectForm(f => ({ ...f, [e.target.name]: e.target.value }));
-
-  const handleCreateProject = async e => {
-    e.preventDefault();
-    setCreatingProject(true);
-    setErrorMsg('');
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_URL}/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(projectForm),
+    if (editingChart) {
+      setChartData(editingChart);
+    } else {
+      setChartData({
+        title: '',
+        type: 'bar',
+        xKey: '',
+        yKey: '',
+        data: availableData
       });
-      if (!res.ok) throw new Error('Failed to create project');
-      const project = await res.json();
-      setProjects(p => [...p, project]);
-      setSelectedProject(project._id);
-      setProjectForm({ name: '', description: '', category: '' });
-    } catch (err) {
-      setErrorMsg(err.message || 'Failed to create project');
-    } finally {
-      setCreatingProject(false);
     }
-  };
+  }, [editingChart, availableData]);
 
-  const handleCreate = async () => {
-    setErrorMsg('');
-    setSuccessMsg('');
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_URL}/charts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          projectId: selectedProject,
-          type: selectedChart,
-          data: chartConfig,
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to create chart');
-      setSuccessMsg('Chart created and added to project!');
-      onOpenChange(false);
-      setStep(1);
-    } catch (err) {
-      setErrorMsg(err.message || 'Failed to create chart');
+  // Always select the most recent uploaded file and its first sheet when modal opens or files change
+  useEffect(() => {
+    if (uploadedFiles && uploadedFiles.length > 0 && open) {
+      setSelectedFile(uploadedFiles.length - 1);
+      setSelectedSheet(0);
     }
-  };
+  }, [uploadedFiles, open]);
 
-  const resetModal = () => {
-    setStep(1)
-    setSelectedFile("")
-    setSelectedChart("")
-    setChartConfig({
-      title: "",
-      xAxis: "",
-      yAxis: "",
-      color: "#3b82f6",
-    })
+  const chartTypes = [
+    { value: 'bar', label: 'Bar Chart', icon: BarChart3, description: 'Compare values across categories', axes: 2 },
+    { value: 'line', label: 'Line Chart', icon: LineChart, description: 'Show trends over time', axes: 2 },
+    { value: 'pie', label: 'Pie Chart', icon: PieChart, description: 'Show proportions of a whole', axes: 1 },
+    { value: 'doughnut', label: 'Doughnut Chart', icon: PieChart, description: 'Show proportions of a whole', axes: 1 },
+    { value: 'polar', label: 'Polar Area Chart', icon: PieChart, description: 'Show proportions in a polar area', axes: 1 },
+    { value: 'scatter', label: 'Scatter Plot', icon: ScatterChart, description: 'Show correlation between variables', axes: 2 },
+    { value: 'area', label: 'Area Chart', icon: TrendingUp, description: 'Highlight magnitude of change', axes: 2 },
+    { value: 'radar', label: 'Radar Chart', icon: Radar, description: 'Compare multiple variables', axes: 2 },
+  ];
+
+  const selectedType = chartTypes.find(t => t.value === chartData.type) || chartTypes[0];
+  const requireX = selectedType.axes >= 1;
+  const requireY = selectedType.axes === 2;
+
+  // Use filesWithData for currentData, fallback to preview if needed
+  let currentData = [];
+  const fileObj = filesWithData[selectedFile];
+  if (fileObj) {
+    if (fileObj.sheets && fileObj.sheets[selectedSheet] && Array.isArray(fileObj.sheets[selectedSheet].data) && fileObj.sheets[selectedSheet].data.length > 0) {
+      currentData = fileObj.sheets[selectedSheet].data;
+    } else if (Array.isArray(fileObj.preview) && fileObj.preview.length > 0) {
+      currentData = fileObj.preview;
+    } else {
+      currentData = availableData;
+    }
+  } else {
+    currentData = availableData;
   }
+  const availableColumns = currentData.length > 0 ? Object.keys(currentData[0]) : [];
+  const hasColumns = availableColumns.length > 0;
+  const hasRows = currentData && currentData.length > 0;
+
+  const handleSave = () => {
+    setError("");
+    if (!chartData.title || !chartData.type || (requireX && !chartData.xKey) || (requireY && !chartData.yKey)) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+    if (!projectId) {
+      setError("Project ID is missing. Please refresh the page or try again from the project workspace.");
+      return;
+    }
+    onChartSave({
+      ...chartData,
+      data: currentData,
+      projectId,
+    });
+  };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        onOpenChange(open)
-        if (!open) resetModal()
-      }}
-    >
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
         <DialogHeader>
-          <DialogTitle>Create New Chart</DialogTitle>
+          <DialogTitle className="text-xl">
+            {editingChart ? 'Edit Chart' : 'Create New Chart'}
+          </DialogTitle>
           <DialogDescription>
-            Follow the steps to create a beautiful visualization from your data
-            {presenceList.length > 0 && (
-              <div className="flex gap-2 items-center text-xs text-muted-foreground">
-                <span>Editing now:</span>
-                {presenceList.map((p, i) => (
-                  <span key={i} className="bg-blue-100 text-blue-700 rounded px-2 py-1">{p.user?.name || 'User'}</span>
-                ))}
-              </div>
-            )}
+            Configure your chart settings and data mapping
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={`step-${step}`} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="step-1" disabled={step !== 1}>1. Select Data</TabsTrigger>
-            <TabsTrigger value="step-2" disabled={step !== 2}>2. Choose Chart</TabsTrigger>
-            <TabsTrigger value="step-3" disabled={step !== 3}>3. Configure</TabsTrigger>
-            <TabsTrigger value="step-4" disabled={step !== 4}>4. Add to Project</TabsTrigger>
-          </TabsList>
+        <div className="space-y-6 pt-4">
+          {/* Basic Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <Label htmlFor="title">Chart Title</Label>
+              <Input
+                id="title"
+                value={chartData.title || ""}
+                onChange={(e) => setChartData({ ...chartData, title: e.target.value })}
+                placeholder="Enter chart title"
+              />
+            </div>
+            <div>
+              <Label>Data Source</Label>
+              <Select value={selectedFile.toString()} onValueChange={(value) => setSelectedFile(parseInt(value))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a file" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uploadedFiles.map((file, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      <div className="flex items-center gap-2">
+                        {file.userId && file.userId.avatar && (
+                          <Avatar src={file.userId.avatar} alt={file.userId.name} className="w-5 h-5" />
+                        )}
+                        <span>{file.filename || file.name || `File ${index + 1}`}</span>
+                        {file.userId && file.userId.name && (
+                          <span className="text-xs text-slate-500 ml-2">by {file.userId.name}</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-          {/* Step 1: Select Data */}
-          <TabsContent value="step-1" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileSpreadsheet className="h-5 w-5" />
-                  Select Data Source
-                </CardTitle>
-                <CardDescription>Choose the dataset you want to visualize</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Available Files</Label>
-                  <Select value={selectedFile} onValueChange={setSelectedFile}>
+          {/* Chart Type Selection */}
+          <div className="mb-6">
+            <Label className="text-base font-medium mb-2 block">Chart Type</Label>
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              {chartTypes.map((type) => {
+                const Icon = type.icon;
+                const isSelected = chartData.type === type.value;
+                return (
+                  <Card
+                    key={type.value}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      isSelected ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-500' : 'hover:bg-slate-50 border-slate-200'
+                    }`}
+                    onClick={() => setChartData({ ...chartData, type: type.value })}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <Icon className={`w-5 h-5 ${isSelected ? 'text-blue-600' : 'text-slate-500'}`} />
+                        <div>
+                          <p className="font-medium text-sm">{type.label}</p>
+                          <p className="text-xs text-slate-500">{type.description}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+          <hr className="my-6 border-slate-200" />
+
+          {/* Data Mapping */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {requireX && (
+              <div>
+                <Label htmlFor="xAxis">{requireY ? "X-Axis (Categories)" : "Category/Value"}</Label>
+                {availableColumns.length === 0 ? (
+                  <div className="text-slate-400 text-sm mt-2">No columns available. Please upload a file with data.</div>
+                ) : (
+                  <Select value={chartData.xKey || ""} onValueChange={(value) => setChartData({ ...chartData, xKey: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a file" />
+                      <SelectValue placeholder="Select column" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sales_data.xlsx">sales_data.xlsx</SelectItem>
-                      <SelectItem value="customer_survey.csv">customer_survey.csv</SelectItem>
-                      <SelectItem value="inventory_report.xlsx">inventory_report.xlsx</SelectItem>
+                      {availableColumns.map((column) => (
+                        <SelectItem key={column} value={column}>
+                          {column}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                </div>
+                )}
+              </div>
+            )}
+            {requireY && (
+              <div>
+                <Label htmlFor="yAxis">Y-Axis (Values)</Label>
+                {availableColumns.length === 0 ? (
+                  <div className="text-slate-400 text-sm mt-2">No columns available. Please upload a file with data.</div>
+                ) : (
+                  <Select value={chartData.yKey || ""} onValueChange={(value) => setChartData({ ...chartData, yKey: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select column" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableColumns.map((column) => (
+                        <SelectItem key={column} value={column}>
+                          {column}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+          </div>
 
-                <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                  <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-lg font-medium mb-2">Or upload a new file</p>
-                  <p className="text-muted-foreground mb-4">Drag and drop or click to browse</p>
-                  <Button variant="outline">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload File
+          {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    onClick={handleSave}
+                    disabled={!chartData.title || !chartData.type || (requireX && !chartData.xKey) || (requireY && !chartData.yKey) || !hasColumns || !hasRows}
+                  >
+                    {editingChart ? 'Save Changes' : 'Create Chart'}
                   </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Step 2: Choose Chart Type */}
-          <TabsContent value="step-2" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Choose Chart Type</CardTitle>
-                <CardDescription>Select the best visualization for your data</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  {chartTypes.map((chart) => {
-                    const IconComponent = chart.icon
-                    return (
-                      <Card
-                        key={chart.id}
-                        className={`cursor-pointer transition-colors ${
-                          selectedChart === chart.id
-                            ? "border-primary bg-primary/5"
-                            : "hover:border-muted-foreground/50"
-                        }`}
-                        onClick={() => setSelectedChart(chart.id)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="p-2 bg-muted rounded">
-                              <IconComponent className="h-6 w-6" />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-medium mb-1">{chart.name}</h3>
-                              <p className="text-sm text-muted-foreground mb-2">{chart.description}</p>
-                              <div className="flex gap-1">
-                                {chart.recommended.map((tag) => (
-                                  <Badge key={tag} variant="outline" className="text-xs">
-                                    {tag}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Step 3: Configure Chart */}
-          <TabsContent value="step-3" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configure Chart</CardTitle>
-                <CardDescription>Customize your chart settings</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="chart-title">Chart Title</Label>
-                    <Input
-                      id="chart-title"
-                      placeholder="Enter chart title"
-                      value={chartConfig.title}
-                      onChange={(e) => setChartConfig({ ...chartConfig, title: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    {['line', 'area', 'radar'].includes(selectedChart) ? (
-                      <>
-                        <Label htmlFor="chart-color">Primary Color</Label>
-                        <Input
-                          id="chart-color"
-                          type="color"
-                          value={chartConfig.color}
-                          onChange={(e) => setChartConfig({ ...chartConfig, color: e.target.value })}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <Label>Palette</Label>
-                        <div className="flex gap-2">
-                          {(chartConfig.palette || ['#3b82f6', '#f59e42', '#10b981', '#ef4444', '#6366f1']).map((color, idx) => (
-                            <Input
-                              key={idx}
-                              type="color"
-                              value={color}
-                              onChange={e => {
-                                const newPalette = [...(chartConfig.palette || ['#3b82f6', '#f59e42', '#10b981', '#ef4444', '#6366f1'])];
-                                newPalette[idx] = e.target.value;
-                                setChartConfig({ ...chartConfig, palette: newPalette });
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>X-Axis Column</Label>
-                    <Select
-                      value={chartConfig.xAxis}
-                      onValueChange={(value) => setChartConfig({ ...chartConfig, xAxis: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select X-axis" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="date">Date</SelectItem>
-                        <SelectItem value="category">Category</SelectItem>
-                        <SelectItem value="region">Region</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Y-Axis Column</Label>
-                    <Select
-                      value={chartConfig.yAxis}
-                      onValueChange={(value) => setChartConfig({ ...chartConfig, yAxis: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Y-axis" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sales">Sales</SelectItem>
-                        <SelectItem value="revenue">Revenue</SelectItem>
-                        <SelectItem value="quantity">Quantity</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Preview */}
-                <div className="border rounded-lg p-8 bg-muted/20">
-                  <div className="text-center text-muted-foreground">
-                    <BarChart3 className="h-16 w-16 mx-auto mb-4" />
-                    <p>Chart preview will appear here</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Step 4: Add to Project */}
-          <TabsContent value="step-4" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add to Project</CardTitle>
-                <CardDescription>Select a project to add this chart to, or create a new one.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Label>Select Project</Label>
-                <Select value={selectedProject} onValueChange={setSelectedProject}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projects.map(p => (
-                      <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="text-center text-muted-foreground">or</div>
-                <form className="space-y-2" onSubmit={handleCreateProject}>
-                  <Input name="name" placeholder="Project Name" value={projectForm.name} onChange={handleProjectFormChange} required />
-                  <Input name="description" placeholder="Description" value={projectForm.description} onChange={handleProjectFormChange} />
-                  <Input name="category" placeholder="Category" value={projectForm.category} onChange={handleProjectFormChange} />
-                  <Button type="submit" disabled={creatingProject}>{creatingProject ? 'Creating...' : 'Create Project'}</Button>
-                </form>
-                {errorMsg && <div className="text-red-500 text-sm">{errorMsg}</div>}
-                {successMsg && <div className="text-green-600 text-sm">{successMsg}</div>}
-              </CardContent>
-            </Card>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={handleBack}>Back</Button>
-              <Button onClick={handleCreate} disabled={!selectedProject}>Create Chart</Button>
-            </div>
-          </TabsContent>
-        </Tabs>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {!hasColumns
+                  ? 'No columns found. Please upload a valid Excel or CSV file with a header row.'
+                  : !chartData.title
+                  ? 'Please enter a chart title.'
+                  : !chartData.type
+                  ? 'Please select a chart type.'
+                  : (requireX && !chartData.xKey)
+                  ? 'Please select a column for the X-Axis or Category.'
+                  : (requireY && !chartData.yKey)
+                  ? 'Please select a column for the Y-Axis.'
+                  : ''}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -98,7 +98,7 @@ export default function HelpPage() {
         />
         <button
           type="submit"
-          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
+          className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
           disabled={loading}
         >
           {loading ? "Sending..." : "Send Message"}
