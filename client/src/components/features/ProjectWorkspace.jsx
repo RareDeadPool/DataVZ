@@ -24,7 +24,8 @@ import {
   PieChart,
   TrendingUp,
   Zap,
-  InfoIcon
+  InfoIcon,
+  BrainCircuit
 } from 'lucide-react';
 import { FileUploadZone } from './FileUploadZone';
 import { ChartGrid } from './ChartGrid';
@@ -40,7 +41,10 @@ import axios from 'axios';
 import api from '@/services/api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import ReactMarkdown from 'react-markdown';
+import { askGeminiSummary } from '@/services/api';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const Index = () => {
   const { projectId } = useParams();
@@ -67,6 +71,9 @@ const Index = () => {
   const [projectLoading, setProjectLoading] = useState(true);
   const [projectError, setProjectError] = useState(null);
 
+  const [showAISummary, setShowAISummary] = useState(false);
+  const [aiSummary, setAISummary] = useState('');
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
 
   // Calculate overall progress
@@ -216,6 +223,21 @@ const Index = () => {
     }
   };
 
+  const handleShowAISummary = async () => {
+    setShowAISummary(true);
+    setLoadingSummary(true);
+    try {
+      const summary = await askGeminiSummary({
+        prompt: project?.name || 'Summarize the charts in this project.',
+        data: charts
+      });
+      setAISummary(summary.text || 'No summary available.');
+    } catch (err) {
+      setAISummary('Failed to fetch summary.');
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
 
 
   // Update allUsers to only include owner and collaborators
@@ -615,6 +637,61 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Floating AI Summary Button */}
+      {charts && charts.length > 0 && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="fixed bottom-6 right-6 z-50 shadow-lg rounded-full h-14 w-14 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white animate-pulse focus:animate-bounce transition-all duration-300"
+                onClick={handleShowAISummary}
+                size="icon"
+                style={{ fontSize: 24 }}
+                aria-label="Show AI Summary"
+              >
+                <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60 animate-ping"></span>
+                <BrainCircuit className="h-7 w-7 relative z-10" />
+                <span className="sr-only">Show AI Summary</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="text-base font-semibold">
+              ✨ Get Instant AI Insights!
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+      <Dialog open={showAISummary} onOpenChange={setShowAISummary}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl shadow-2xl border-0">
+          <div className="bg-blue-50 dark:bg-blue-950 p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-3 mb-2">
+              <BrainCircuit className="h-7 w-7 text-blue-600" />
+              <div>
+                <DialogTitle className="text-lg font-bold text-blue-900 dark:text-blue-200">AI Summary</DialogTitle>
+                <DialogDescription className="text-xs text-blue-700 dark:text-blue-300 font-semibold">Vizard says: Here’s what I found</DialogDescription>
+              </div>
+            </div>
+            <div className="relative">
+              {loadingSummary ? (
+                <div className="text-muted-foreground py-8 text-center">Generating summary...</div>
+              ) : (
+                <div className="prose prose-blue max-h-64 overflow-y-auto bg-white dark:bg-blue-950 p-3 rounded-lg border border-blue-100 dark:border-blue-900">
+                  <ReactMarkdown>{aiSummary}</ReactMarkdown>
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={() => navigator.clipboard.writeText(aiSummary)}
+                aria-label="Copy Summary"
+              >
+                Copy
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Chart Creation Modal */}
       <ChartCreationModal

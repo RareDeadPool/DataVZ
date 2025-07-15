@@ -502,6 +502,10 @@ export default function VizardPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
+                      <div className="mb-2 text-blue-700 font-semibold flex items-center gap-2">
+                        <BrainCircuit className="h-4 w-4" />
+                        Vizard says:
+                      </div>
                       <div ref={chartContainerRef} className="bg-card border rounded-lg p-6" style={{ minHeight: '400px' }}>
                         <ChartRenderer {...chartConfig} />
                       </div>

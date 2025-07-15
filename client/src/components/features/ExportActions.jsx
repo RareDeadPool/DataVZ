@@ -23,6 +23,62 @@ async function fetchAISummary(project, charts) {
   }
 }
 
+function cleanSummaryText(summary) {
+  // Remove asterisks, markdown bullets, and extra whitespace
+  return summary
+    .replace(/\*\*/g, '') // Remove bold markdown
+    .replace(/\* /g, '') // Remove bullet points
+    .replace(/\*\*/g, '') // Remove any remaining asterisks
+    .replace(/\n\s*-/g, '\n-') // Remove space after newlines and dashes
+    .replace(/\n{2,}/g, '\n') // Collapse multiple newlines
+    .replace(/\n- /g, '\n• ') // Replace dash bullets with dot bullets
+    .replace(/\n\s*/g, '\n') // Remove extra spaces after newlines
+    .trim();
+}
+
+// Helper: Detect if a line is a bullet or subpoint
+function isBullet(line) {
+  return /^[-•]/.test(line.trim());
+}
+function isRecommendation(line) {
+  return line.match(/^Recommendation:?$/i) || line.match(/^Recommendations:?$/i);
+}
+
+// Helper: Shorten summary to 3-4 sentences or 400 characters
+function shortenSummary(text) {
+  // Split into sentences, keep the first 3-4, and join
+  const sentences = text.replace(/\n/g, ' ').split(/(?<=[.!?])\s+/);
+  let short = sentences.slice(0, 4).join(' ');
+  if (short.length > 400) short = short.slice(0, 400) + '...';
+  return short.trim();
+}
+
+// Helper: Extract insights and recommendations from summary
+function extractInsightsAndRecommendations(text) {
+  // Try to split by headings if present
+  let insights = [], recs = [];
+  let lower = text.toLowerCase();
+  if (lower.includes('recommendation')) {
+    const [insightPart, recPart] = text.split(/recommendations?:?/i);
+    insights = insightPart
+      .replace(/key insights?:?/i, '')
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.trim()).filter(Boolean);
+    recs = recPart
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.trim()).filter(Boolean);
+  } else {
+    // No headings, just split into sentences and use first 3 as insights, next 2 as recs
+    const sentences = text.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+    insights = sentences.slice(0, 3);
+    recs = sentences.slice(3, 5);
+  }
+  return {
+    insights: insights.slice(0, 3),
+    recommendations: recs.slice(0, 3)
+  };
+}
+
 export function ExportActions({ charts, data, project }) {
   const [isExporting, setIsExporting] = useState(false);
   const [exportingChart, setExportingChart] = useState(null);
@@ -91,79 +147,55 @@ export function ExportActions({ charts, data, project }) {
       pdf.line(margin, currentY, pageWidth - margin, currentY);
       currentY += 10; // Extra space before AI summary
 
-      // AI Summary (optional)
-      if (includeAISummary) {
-        // Draw a subtle colored background and border for the summary box
-        const summaryBoxTop = currentY - 2;
-        const summaryBoxLeft = margin - 2;
-        const summaryBoxWidth = pageWidth - 2 * margin + 4;
-        let summaryBoxHeight = 0; // We'll calculate as we go
-        // Icon: Draw a small lightbulb before heading
-        pdf.setDrawColor(255, 204, 0);
-        pdf.setFillColor(255, 204, 0);
-        pdf.circle(margin + 3, currentY + 2, 2.5, 'F');
-        pdf.setDrawColor(180);
+      // AI Summary (always included at the top)
+      let summary = await fetchAISummary(project, charts);
+      summary = cleanSummaryText(summary);
+      const { insights, recommendations } = extractInsightsAndRecommendations(summary);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(16);
+      pdf.setTextColor(44, 62, 80);
+      pdf.text('Summary:', margin, currentY);
+      currentY += 12;
+      // Key Insights
+      if (insights.length) {
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(15);
-        pdf.text('AI Summary', margin + 9, currentY + 3);
-        currentY += 10;
+        pdf.setFontSize(13);
+        pdf.setTextColor(33, 33, 33);
+        pdf.text('Key Insights', margin + 2, currentY);
+        currentY += 9;
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(12);
-        const summary = await fetchAISummary(project, charts);
-        let summaryLines = summary.split('\n').map(line => line.trim()).filter(Boolean);
-        let bulletLines = summaryLines.filter(line => line.startsWith('*'));
-        let nonBulletLines = summaryLines.filter(line => !line.startsWith('*'));
-        let boxStartY = currentY;
-        if (nonBulletLines.length) {
-          const splitText = pdf.splitTextToSize(nonBulletLines.join(' '), pageWidth - 2 * margin - 6);
-          pdf.setFillColor(245, 245, 255);
-          pdf.rect(margin, currentY - 2, pageWidth - 2 * margin, splitText.length * 6 + 8, 'F');
-          pdf.setDrawColor(120, 140, 255);
-          pdf.setLineWidth(1);
-          pdf.line(margin, currentY - 2, margin, currentY - 2 + splitText.length * 6 + 8);
-          pdf.setTextColor(30, 30, 80);
-          pdf.text(splitText, margin + 4, currentY + 4);
-          currentY += splitText.length * 6 + 10;
-          summaryBoxHeight += splitText.length * 6 + 10;
-        }
-        if (bulletLines.length) {
-          bulletLines.forEach(line => {
-            // Remove all asterisks and trim
-            let cleanLine = line.replace(/\*+/g, '').trim();
-            const splitBullet = pdf.splitTextToSize(cleanLine, pageWidth - 2 * margin - 14);
-            // Draw background and border for each bullet
-            pdf.setFillColor(245, 245, 255);
-            pdf.rect(margin, currentY - 2, pageWidth - 2 * margin, splitBullet.length * 6 + 8, 'F');
-            pdf.setDrawColor(120, 140, 255);
-            pdf.setLineWidth(1);
-            pdf.line(margin, currentY - 2, margin, currentY - 2 + splitBullet.length * 6 + 8);
-            // Draw bullet
-            pdf.setTextColor(80, 120, 255);
-            pdf.circle(margin + 4, currentY + 2, 1.7, 'F');
-            pdf.setTextColor(30, 30, 80);
-            pdf.text(splitBullet, margin + 10, currentY + 4);
-            currentY += splitBullet.length * 6 + 12; // Extra space between bullets
-            summaryBoxHeight += splitBullet.length * 6 + 12;
+        insights.forEach(insight => {
+          const split = pdf.splitTextToSize(insight, pageWidth - 2 * margin - 16);
+          split.forEach(line => {
+            pdf.text('• ' + line, margin + 10, currentY);
+            currentY += 7;
           });
-        }
-        if (!nonBulletLines.length && !bulletLines.length) {
-          pdf.setFillColor(245, 245, 255);
-          pdf.rect(margin, currentY - 2, pageWidth - 2 * margin, 14, 'F');
-          pdf.setDrawColor(120, 140, 255);
-          pdf.setLineWidth(1);
-          pdf.line(margin, currentY - 2, margin, currentY + 12);
-          pdf.setTextColor(30, 30, 80);
-          pdf.text('No summary available.', margin + 4, currentY + 8);
-          currentY += 16;
-          summaryBoxHeight += 16;
-        }
-        pdf.setTextColor(0);
-        pdf.setLineWidth(0.2);
-        currentY += 2;
-        pdf.setDrawColor(220);
-        pdf.line(margin, currentY, pageWidth - margin, currentY);
-        currentY += 6;
+        });
+        currentY += 5;
       }
+      // Recommendations
+      if (recommendations.length) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(13);
+        pdf.text('Actionable Recommendations', margin + 2, currentY);
+        currentY += 9;
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(12);
+        recommendations.forEach(rec => {
+          const split = pdf.splitTextToSize(rec, pageWidth - 2 * margin - 16);
+          split.forEach(line => {
+            pdf.text('• ' + line, margin + 10, currentY);
+            currentY += 7;
+          });
+        });
+        currentY += 5;
+      }
+      currentY += 8;
+      pdf.setDrawColor(180);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, currentY, pageWidth - margin, currentY);
+      currentY += 8;
 
       // Charts
       for (let i = 0; i < charts.length; i++) {
@@ -253,7 +285,52 @@ export function ExportActions({ charts, data, project }) {
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             pdf.setFontSize(16);
             pdf.text(chart.title || `Chart ${i + 1}`, pageWidth / 2, 30, { align: 'center' });
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, 40, imgWidth, imgHeight);
+            // AI Summary for this chart
+            const summary = await fetchAISummary(project, [chart]);
+            let summaryClean = cleanSummaryText(summary);
+            const { insights: insightsSep, recommendations: recsSep } = extractInsightsAndRecommendations(summaryClean);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(14);
+            pdf.setTextColor(44, 62, 80);
+            pdf.text('Summary:', margin, 45);
+            let ySep = 57;
+            // Key Insights
+            if (insightsSep.length) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.setFontSize(12);
+              pdf.setTextColor(33, 33, 33);
+              pdf.text('Key Insights', margin + 2, ySep);
+              ySep += 9;
+              pdf.setFont('helvetica', 'normal');
+              pdf.setFontSize(11);
+              insightsSep.forEach(insight => {
+                const split = pdf.splitTextToSize(insight, pageWidth - 2 * margin - 16);
+                split.forEach(line => {
+                  pdf.text('• ' + line, margin + 10, ySep);
+                  ySep += 7;
+                });
+              });
+              ySep += 5;
+            }
+            // Recommendations
+            if (recsSep.length) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.setFontSize(12);
+              pdf.text('Actionable Recommendations', margin + 2, ySep);
+              ySep += 9;
+              pdf.setFont('helvetica', 'normal');
+              pdf.setFontSize(11);
+              recsSep.forEach(rec => {
+                const split = pdf.splitTextToSize(rec, pageWidth - 2 * margin - 16);
+                split.forEach(line => {
+                  pdf.text('• ' + line, margin + 10, ySep);
+                  ySep += 7;
+                });
+              });
+              ySep += 5;
+            }
+            ySep += 8;
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, ySep, imgWidth, imgHeight);
             pdf.save(`${chart.title || 'chart'}-${Date.now()}.pdf`);
             if (i < charts.length - 1) await new Promise(r => setTimeout(r, 200));
           }

@@ -9,7 +9,7 @@
     "jspdf": "^3.0.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-
+    "react-markdown": "^10.1.0",
     "three": "^0.178.0"
   }
 }

@@ -5,9 +5,13 @@ import { PreviewSection } from "./PreviewSection";
 import { RecentUploads } from "./RecentUploads";
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useSelector } from 'react-redux';
+import { BrainCircuit } from 'lucide-react';
+import { askGeminiSummary } from '@/services/api';
+import ReactMarkdown from 'react-markdown';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -20,6 +24,9 @@ export default function Dashboard() {
   const [errorMsg, setErrorMsg] = useState('');
   const uploadedFiles = useSelector(state => state.uploadedFiles.files);
   const [previewData, setPreviewData] = useState(null);
+  const [showAISummary, setShowAISummary] = useState(false);
+  const [aiSummary, setAISummary] = useState('');
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   const handleProjectFormChange = e => setProjectForm(f => ({ ...f, [e.target.name]: e.target.value }));
   const handleFileChange = e => setFile(e.target.files[0]);
@@ -63,8 +70,75 @@ export default function Dashboard() {
     }
   };
 
+  // Example: gather all chart data for summary (replace with real chart data as needed)
+  const allCharts = uploadedFiles || [];
+
+  const handleShowAISummary = async () => {
+    setShowAISummary(true);
+    setLoadingSummary(true);
+    try {
+      // You may want to gather all chart data here
+      const summary = await askGeminiSummary({ prompt: 'Summarize all dashboard charts', data: allCharts });
+      setAISummary(summary.text ? summary.text : 'No summary available.');
+    } catch (err) {
+      setAISummary('Failed to generate summary.');
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
   return (
     <div className="flex-1 p-6 bg-background min-h-screen">
+      {/* Floating AI Summary Button */}
+      {uploadedFiles && uploadedFiles.length > 0 && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="fixed bottom-6 right-6 z-50 shadow-lg rounded-full h-14 w-14 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white animate-pulse focus:animate-bounce transition-all duration-300"
+                onClick={handleShowAISummary}
+                size="icon"
+                style={{ fontSize: 24 }}
+                aria-label="Show AI Summary"
+              >
+                <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60 animate-ping"></span>
+                <BrainCircuit className="h-7 w-7 relative z-10" />
+                <span className="sr-only">Show AI Summary</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="text-base font-semibold">
+              ✨ Get Instant AI Insights!
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+      <Dialog open={showAISummary} onOpenChange={setShowAISummary}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl shadow-2xl border-0">
+          <div className="bg-blue-50 dark:bg-blue-950 p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-3 mb-2">
+              <BrainCircuit className="h-7 w-7 text-blue-600" />
+              <div>
+                <DialogTitle className="text-lg font-bold text-blue-900 dark:text-blue-200">AI Summary</DialogTitle>
+                <DialogDescription className="text-sm text-blue-700 dark:text-blue-300">Vizard says: Here’s what I found</DialogDescription>
+              </div>
+            </div>
+            <div className="relative bg-white dark:bg-blue-950/80 rounded-lg p-4 shadow-inner max-h-72 overflow-y-auto border border-blue-100 dark:border-blue-800">
+              {loadingSummary ? (
+                <div className="text-blue-700">Generating summary...</div>
+              ) : (
+                <ReactMarkdown>{aiSummary}</ReactMarkdown>
+              )}
+              <button
+                className="absolute top-2 right-2 text-xs text-blue-500 hover:text-blue-700 bg-blue-100 dark:bg-blue-900/40 rounded px-2 py-1"
+                aria-label="Copy summary"
+                onClick={() => navigator.clipboard.writeText(aiSummary)}
+              >
+                Copy Summary
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center mb-4">
           <div className="space-y-2">
