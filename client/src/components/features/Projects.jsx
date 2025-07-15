@@ -209,7 +209,13 @@ export default function ProjectsPage() {
     setShareLink('');
     try {
       const data = await shareProject(selectedProject._id);
-      setShareLink(data.shareLink);
+      // If backend returns only a shareId or token, construct the link using the environment variable
+      const base = import.meta.env.VITE_API_BASE?.replace(/\/api$/, '') || window.location.origin;
+      let link = data.shareLink;
+      if (!link && (data.shareId || data.token)) {
+        link = `${base}/projects/accept?token=${data.shareId || data.token}`;
+      }
+      setShareLink(link || 'Failed to generate share link.');
     } catch (err) {
       setShareError(err?.response?.data?.error || 'Failed to generate share link');
     } finally {

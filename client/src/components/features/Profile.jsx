@@ -55,7 +55,7 @@ export default function Profile() {
   const [deleteErr, setDeleteErr] = useState("");
   const fileInputRef = useRef();
 
-  const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  const API = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
   const token = localStorage.getItem("token");
 
   const getAvatarUrl = (avatar) => {

@@ -13,7 +13,7 @@ import { askGeminiSummary } from '@/services/api';
 import ReactMarkdown from 'react-markdown';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
 
 export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);

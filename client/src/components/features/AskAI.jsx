@@ -35,6 +35,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DataTable } from "./DataTable";
+import { generateShareLink } from '@/services/api';
 
 // AI function to generate chart configurations
 const askGeminiAI = async ({ prompt, data }) => {
@@ -138,10 +139,6 @@ const toggleFavoriteChart = async (id) => {
   );
   localStorage.setItem('chartHistory', JSON.stringify(updated));
   return updated;
-};
-
-const generateShareLink = async (id) => {
-  return { shareId: id };
 };
 
 const fetchSharedChart = async (shareId) => {
@@ -300,7 +297,8 @@ export default function VizardPage() {
     e?.stopPropagation();
     try {
       const { shareId } = await generateShareLink(entry._id);
-      const url = `${window.location.origin}/vizard?share=${shareId}`;
+      const base = import.meta.env.VITE_API_BASE?.replace(/\/api$/, '') || window.location.origin;
+      const url = `${base}/vizard?share=${shareId}`;
       setShareUrl(url);
       setShowShareModal(true);
     } catch (err) {

@@ -85,7 +85,7 @@ export function UploadSection() {
   const [pendingPaletteName, setPendingPaletteName] = useState(paletteName);
   const chartContainerRef = useRef(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
 
   const user = useSelector(state => state.auth.user);
   // Assume projectId is available (e.g., from props, context, or selected project)

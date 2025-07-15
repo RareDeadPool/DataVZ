@@ -28,11 +28,11 @@ import {
   Search,
   BrainCircuit
 } from 'lucide-react';
-import { askGeminiSummary } from '@/services/api';
+import { askGeminiSummary, generateShareLink } from '@/services/api';
 import ReactMarkdown from 'react-markdown';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
 
 export default function AnalyticsPage() {
   const chartRef = useRef(null);
@@ -400,9 +400,21 @@ export default function AnalyticsPage() {
     doc.save('analytics.pdf');
   };
 
-  // Share Analytics: Generate a shareable link (placeholder)
-  const handleGenerateShareLink = () => {
-    setShareLink(window.location.href + '?share=1');
+  // Share Analytics: Generate a shareable link using backend API
+  const handleGenerateShareLink = async () => {
+    try {
+      // For demo, use the first chart's id or analytics summary id if available
+      // You may want to adjust this to share a specific chart or summary
+      const chartId = charts[0]?._id;
+      if (!chartId) {
+        setShareLink('No chart available to share.');
+        return;
+      }
+      const { shareId } = await generateShareLink(chartId);
+      setShareLink(`${window.location.origin}/vizard?share=${shareId}`);
+    } catch (err) {
+      setShareLink('Failed to generate share link.');
+    }
   };
 
   // Share Analytics: Copy summary to clipboard
