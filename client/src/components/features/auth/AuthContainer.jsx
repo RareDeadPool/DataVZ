@@ -22,7 +22,7 @@ import {
   BrainCircuit,
   Sparkles
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" className="mr-3">
@@ -34,6 +34,7 @@ const GoogleIcon = () => (
 );
 
 export default function AuthContainer() {
+  const location = useLocation();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -109,20 +110,22 @@ export default function AuthContainer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-
     setIsLoading(true);
     setErrors({});
     setSuccess('');
-
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
       if (isLogin) {
-        setSuccess('Welcome back! Redirecting to dashboard...');
+        setSuccess('Welcome back! Redirecting...');
         setTimeout(() => {
-          navigate('/dashboard');
+          const params = new URLSearchParams(location.search);
+          const redirect = params.get('redirect');
+          if (redirect) {
+            navigate(redirect);
+          } else {
+            navigate('/dashboard');
+          }
         }, 1000);
       } else {
         setSuccess('Account created successfully! Please check your email to verify your account.');
