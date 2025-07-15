@@ -113,6 +113,7 @@ export default function ProjectsPage() {
   const [shareLoading, setShareLoading] = useState(false);
   const [shareError, setShareError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState('');
 
   // Filtered projects
   const filteredProjects = projects.filter((project) => {
@@ -203,12 +204,12 @@ export default function ProjectsPage() {
   };
 
   const handleSendProject = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject || !recipientEmail) return;
     setShareLoading(true);
     setShareError('');
     setShareLink('');
     try {
-      const data = await shareProject(selectedProject._id);
+      const data = await shareProject(selectedProject._id, recipientEmail);
       // If backend returns only a shareId or token, construct the link using the environment variable
       const base = import.meta.env.VITE_API_BASE?.replace(/\/api$/, '') || window.location.origin;
       let link = data.shareLink;
@@ -652,9 +653,17 @@ export default function ProjectsPage() {
             <DialogTitle>Send Project</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <Input
+              type="email"
+              placeholder="Recipient's email address"
+              value={recipientEmail}
+              onChange={e => setRecipientEmail(e.target.value)}
+              required
+              disabled={shareLoading}
+            />
             <Button
               onClick={handleSendProject}
-              disabled={shareLoading || !selectedProject}
+              disabled={shareLoading || !selectedProject || !recipientEmail}
               className="w-full"
             >
               {shareLoading ? 'Generating...' : 'Generate Share Link'}

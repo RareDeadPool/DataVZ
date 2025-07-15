@@ -146,11 +146,17 @@ exports.deleteProject = async (req, res) => {
   }
 }; 
 
-// Share a project (generate a share token and link)
+// Share a project (generate a share token and link, send to recipient email)
+const sendEmail = require('../utils/sendEmail');
 exports.shareProject = async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.params.id;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Recipient email is required.' });
+    }
 
     // Only owner can share
     const project = await Project.findById(projectId);
@@ -166,8 +172,23 @@ exports.shareProject = async (req, res) => {
       used: false,
     });
 
-    // Construct share link (frontend should handle /accept-project?token=...)
+    // Construct share link
     const shareLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/accept-project?token=${token}`;
+
+    // Send email to recipient
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'You have been invited to a DataViz project',
+        text: `You have been invited to access a DataViz project. Click the link to accept: ${shareLink}`,
+        html: `<p>You have been invited to access a DataViz project.</p><p><a href="${shareLink}">Click here to accept the project</a></p>`
+      });
+    } catch (emailErr) {
+      console.error('Failed to send share email:', emailErr);
+      // Optionally, you can still return the link even if email fails
+      return res.status(500).json({ error: 'Failed to send email. Please try again later.' });
+    }
+
     res.json({ shareLink });
   } catch (err) {
     console.error('Error in shareProject:', err);
