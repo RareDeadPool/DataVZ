@@ -19,13 +19,23 @@ import RequestPasswordReset from './components/features/auth/RequestPasswordRese
 import ResetPassword from './components/features/auth/ResetPassword';
 import { ThemeProvider } from './components/common/theme-provider';
 import MainLayout from './components/layout/MainLayout';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { login } from './store/slices/authSlice';
 import { Toaster } from 'sonner';
+import { Navigate, useLocation } from 'react-router-dom';
 
 function LandingPageWithAuthNav() {
   const navigate = useNavigate();
   return <LandingPage onGetStarted={() => navigate('/auth')} onSignIn={() => navigate('/auth')} />;
+}
+
+function PrivateRoute({ children }) {
+  const user = useSelector(state => state.auth.user);
+  const location = useLocation();
+  if (!user) {
+    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+  return children;
 }
 
 function App() {
@@ -54,21 +64,22 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPageWithAuthNav />} />
           <Route path="/auth" element={<AuthContainer />} />
+          <Route path="/login" element={<AuthContainer />} />
           <Route path="/request-password-reset" element={<RequestPasswordReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
-          <Route path="/analytics" element={<MainLayout><AnalyticsPage /></MainLayout>} />
-          <Route path="/projects" element={<MainLayout><ProjectsPage /></MainLayout>} />
-          <Route path="/projects/:projectId" element={<MainLayout><ProjectWorkspace /></MainLayout>} />
-          <Route path="/workspace/:projectId" element={<MainLayout><ProjectWorkspace /></MainLayout>} />
+          <Route path="/dashboard" element={<PrivateRoute><MainLayout><Dashboard /></MainLayout></PrivateRoute>} />
+          <Route path="/analytics" element={<PrivateRoute><MainLayout><AnalyticsPage /></MainLayout></PrivateRoute>} />
+          <Route path="/projects" element={<PrivateRoute><MainLayout><ProjectsPage /></MainLayout></PrivateRoute>} />
+          <Route path="/projects/:projectId" element={<PrivateRoute><MainLayout><ProjectWorkspace /></MainLayout></PrivateRoute>} />
+          <Route path="/workspace/:projectId" element={<PrivateRoute><MainLayout><ProjectWorkspace /></MainLayout></PrivateRoute>} />
 
-          <Route path="/vizard" element={<MainLayout><Vizard /></MainLayout>} />
-          <Route path="/search" element={<MainLayout><SearchPage /></MainLayout>} />
-          <Route path="/help" element={<MainLayout><HelpPage /></MainLayout>} />
-          <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
-          <Route path="/settings" element={<MainLayout><SettingsPage /></MainLayout>} />
-          <Route path="/test-project" element={<MainLayout><ProjectCreationTest /></MainLayout>} />
-          <Route path="/debug-project" element={<MainLayout><ProjectCreationDebug /></MainLayout>} />
+          <Route path="/vizard" element={<PrivateRoute><MainLayout><Vizard /></MainLayout></PrivateRoute>} />
+          <Route path="/search" element={<PrivateRoute><MainLayout><SearchPage /></MainLayout></PrivateRoute>} />
+          <Route path="/help" element={<PrivateRoute><MainLayout><HelpPage /></MainLayout></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><MainLayout><Profile /></MainLayout></PrivateRoute>} />
+          <Route path="/settings" element={<PrivateRoute><MainLayout><SettingsPage /></MainLayout></PrivateRoute>} />
+          <Route path="/test-project" element={<PrivateRoute><MainLayout><ProjectCreationTest /></MainLayout></PrivateRoute>} />
+          <Route path="/debug-project" element={<PrivateRoute><MainLayout><ProjectCreationDebug /></MainLayout></PrivateRoute>} />
           <Route path="/accept-project" element={<AcceptProject />} />
         </Routes>
       </Router>
