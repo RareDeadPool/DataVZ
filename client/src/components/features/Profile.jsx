@@ -1,8 +1,30 @@
-"use client"
-
 import React, { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { login } from "../../store/slices/authSlice";
+import { 
+  User, 
+  Mail, 
+  MapPin, 
+  Edit3, 
+  Save, 
+  X, 
+  Camera, 
+  Trash2, 
+  Shield, 
+  Activity, 
+  AlertTriangle,
+  Clock,
+  Upload,
+  Eye,
+  Lock
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const mockActivity = [
   { time: "2 hours ago", action: "Uploaded new dataset 'Q1 Sales'" },
@@ -201,204 +223,348 @@ export default function Profile() {
   };
 
   return (
-    <div className="max-w-xl mx-auto py-10 px-4">
-      <h1 className="text-2xl font-bold mb-6">Profile</h1>
-      <div className="flex items-center gap-4 mb-8">
-        {getAvatarUrl(avatarFile ? avatar : user.avatar) === "/placeholder-user.jpg" ? (
-          <div className="w-20 h-20 rounded-full border flex items-center justify-center bg-gray-100 text-3xl font-bold text-gray-500">
-            {getInitials(user.name)}
-          </div>
-        ) : (
-          <img
-            src={getAvatarUrl(avatarFile ? avatar : user.avatar)}
-            alt={user.name}
-            className="w-20 h-20 rounded-full object-cover border"
-          />
-        )}
-        <div>
-          <div className="text-lg font-semibold text-foreground dark:text-white">{user.name}</div>
-          <div className="text-muted-foreground">{user.email}</div>
-          <div className="text-xs text-muted-foreground">{user.role}</div>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-slate-100 dark:from-primary/10 dark:via-background dark:to-slate-900">
+      <div className="max-w-4xl mx-auto py-10 px-4 space-y-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-slate-600 dark:from-primary dark:to-slate-400 bg-clip-text text-transparent">
+            Profile Settings
+          </h1>
+          <p className="text-muted-foreground">Manage your account and preferences</p>
         </div>
-        <div className="ml-auto flex flex-col gap-2">
-          <button
-            className="text-sm text-primary underline"
-            onClick={() => fileInputRef.current.click()}
-            disabled={avatarUploading}
-          >
-            Change Avatar
-          </button>
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            onChange={handleAvatarChange}
-            disabled={avatarUploading}
-          />
-          <button
-            className="text-sm text-destructive underline"
-            onClick={handleAvatarRemove}
-            disabled={avatarUploading}
-          >
-            Remove Avatar
-          </button>
-          {avatarFile && (
-            <button
-              className="text-xs bg-primary text-primary-foreground rounded px-2 py-1 mt-1"
-              onClick={handleAvatarUpload}
-              disabled={avatarUploading}
-            >
-              {avatarUploading ? "Uploading..." : "Upload Avatar"}
-            </button>
-          )}
-        </div>
-      </div>
-      {editMode ? (
-        <form onSubmit={handleSave} className="space-y-4 mb-8">
-          <div>
-            <label className="block mb-1 font-medium">Name</label>
-            <input
-              type="text"
-              name="name"
-              className="w-full border rounded px-3 py-2"
-              value={form.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-medium">Email</label>
-            <input
-              type="email"
-              name="email"
-              className="w-full border rounded px-3 py-2"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-medium">Bio</label>
-            <textarea
-              name="bio"
-              className="w-full border rounded px-3 py-2"
-              value={form.bio}
-              onChange={handleChange}
-              rows={2}
-            />
-          </div>
-          <div>
-            <label className="block mb-1 font-medium">Location</label>
-            <input
-              type="text"
-              name="location"
-              className="w-full border rounded px-3 py-2"
-              value={form.location}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              className="bg-gray-200 px-4 py-2 rounded"
-              onClick={handleCancel}
-            >
-              Cancel
-            </button>
-          </div>
-          {saveMsg && <div className="text-green-600 mt-2">{saveMsg}</div>}
-          {saveErr && <div className="text-red-600 mt-2">{saveErr}</div>}
-        </form>
-      ) : (
-        <div className="mb-8">
-          <div className="mb-2"><span className="font-medium">Bio:</span> {user.bio || <span className="text-gray-400">(none)</span>}</div>
-          <div className="mb-2"><span className="font-medium">Location:</span> {user.location || <span className="text-gray-400">(none)</span>}</div>
-          <button
-            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-            onClick={handleEdit}
-          >
-            Edit Profile
-          </button>
-          {saveMsg && <div className="text-green-600 mt-2">{saveMsg}</div>}
-          {saveErr && <div className="text-red-600 mt-2">{saveErr}</div>}
-        </div>
-      )}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2">Change Password</h2>
-        <form onSubmit={handlePasswordChange} className="space-y-2">
-          <input
-            type="password"
-            name="currentPassword"
-            className="w-full border rounded px-3 py-2"
-            placeholder="Current Password"
-            value={passwords.currentPassword}
-            onChange={e => setPasswords({ ...passwords, currentPassword: e.target.value })}
-            required
-          />
-          <input
-            type="password"
-            name="newPassword"
-            className="w-full border rounded px-3 py-2"
-            placeholder="New Password"
-            value={passwords.newPassword}
-            onChange={e => setPasswords({ ...passwords, newPassword: e.target.value })}
-            required
-          />
-          <button
-            type="submit"
-            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-          >
-            Change Password
-          </button>
-        </form>
-        {pwMsg && <div className="text-green-600 mt-2">{pwMsg}</div>}
-        {pwErr && <div className="text-red-600 mt-2">{pwErr}</div>}
-      </div>
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2">Recent Activity</h2>
-        <ul className="space-y-2">
-          {mockActivity.map((item, idx) => (
-            <li key={idx} className="border-b pb-2">
-              <span className="text-gray-800">{item.action}</span>
-              <span className="text-xs text-gray-500 ml-2">({item.time})</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2 text-red-600">Danger Zone</h2>
-        <button
-          className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          onClick={() => setDeleteConfirm(true)}
-        >
-          Delete Account
-        </button>
-        {deleteConfirm && (
-          <div className="mt-4 p-4 border border-red-400 bg-red-50 rounded">
-            <div className="mb-2 text-red-700 font-semibold">Are you sure you want to delete your account? This action cannot be undone.</div>
-            <button
-              className="bg-red-600 text-white px-4 py-2 rounded mr-2"
-              onClick={handleDelete}
-            >
-              Yes, Delete My Account
-            </button>
-            <button
-              className="bg-gray-200 px-4 py-2 rounded"
-              onClick={() => setDeleteConfirm(false)}
-            >
-              Cancel
-            </button>
-            {deleteMsg && <div className="text-green-600 mt-2">{deleteMsg}</div>}
-            {deleteErr && <div className="text-red-600 mt-2">{deleteErr}</div>}
-          </div>
-        )}
+
+        {/* Profile Card */}
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Avatar Section */}
+            <div className="flex items-start gap-6">
+              <div className="relative">
+                {getAvatarUrl(avatarFile ? avatar : user.avatar) === "/placeholder-user.jpg" ? (
+                  <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-3xl font-bold text-slate-500">
+                    {getInitials(user.name)}
+                  </div>
+                ) : (
+                  <img
+                    src={getAvatarUrl(avatarFile ? avatar : user.avatar)}
+                    alt={user.name}
+                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                  />
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
+                  onClick={() => fileInputRef.current.click()}
+                  disabled={avatarUploading}
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  style={{ display: "none" }}
+                  onChange={handleAvatarChange}
+                  disabled={avatarUploading}
+                />
+              </div>
+
+              <div className="flex-1 space-y-3">
+                <div>
+                  <h3 className="text-xl font-semibold">{user.name}</h3>
+                  <p className="text-muted-foreground">{user.email}</p>
+                  <Badge variant="secondary" className="mt-1">
+                    {user.role}
+                  </Badge>
+                </div>
+
+                <div className="flex gap-2">
+                  {avatarFile && (
+                    <Button
+                      size="sm"
+                      onClick={handleAvatarUpload}
+                      disabled={avatarUploading}
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      {avatarUploading ? "Uploading..." : "Upload"}
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleAvatarRemove}
+                    disabled={avatarUploading}
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
+
+              <Button
+                variant={editMode ? "outline" : "default"}
+                onClick={editMode ? handleCancel : handleEdit}
+                className="flex items-center gap-2"
+              >
+                {editMode ? (
+                  <>
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </>
+                ) : (
+                  <>
+                    <Edit3 className="h-4 w-4" />
+                    Edit Profile
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <Separator />
+
+            {/* Form Section */}
+            {editMode ? (
+              <form onSubmit={handleSave} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Name
+                    </label>
+                    <Input
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </label>
+                    <Input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Location
+                  </label>
+                  <Input
+                    type="text"
+                    name="location"
+                    value={form.location}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    Bio
+                  </label>
+                  <Textarea
+                    name="bio"
+                    value={form.bio}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Tell us about yourself..."
+                  />
+                </div>
+                <Button type="submit" className="flex items-center gap-2">
+                  <Save className="h-4 w-4" />
+                  Save Changes
+                </Button>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <Eye className="h-4 w-4" />
+                      Bio
+                    </div>
+                    <p className="text-sm">
+                      {user.bio || <span className="text-muted-foreground italic">No bio added yet</span>}
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      Location
+                    </div>
+                    <p className="text-sm">
+                      {user.location || <span className="text-muted-foreground italic">Location not specified</span>}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Messages */}
+            {saveMsg && (
+              <Alert className="bg-green-50 border-green-200">
+                <AlertDescription className="text-green-800">{saveMsg}</AlertDescription>
+              </Alert>
+            )}
+            {saveErr && (
+              <Alert className="bg-red-50 border-red-200">
+                <AlertDescription className="text-red-800">{saveErr}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Security Card */}
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Security Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    Current Password
+                  </label>
+                  <Input
+                    type="password"
+                    name="currentPassword"
+                    value={passwords.currentPassword}
+                    onChange={e => setPasswords({ ...passwords, currentPassword: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    New Password
+                  </label>
+                  <Input
+                    type="password"
+                    name="newPassword"
+                    value={passwords.newPassword}
+                    onChange={e => setPasswords({ ...passwords, newPassword: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              <Button type="submit" variant="outline">
+                Change Password
+              </Button>
+            </form>
+
+            {pwMsg && (
+              <Alert className="bg-green-50 border-green-200">
+                <AlertDescription className="text-green-800">{pwMsg}</AlertDescription>
+              </Alert>
+            )}
+            {pwErr && (
+              <Alert className="bg-red-50 border-red-200">
+                <AlertDescription className="text-red-800">{pwErr}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Activity Card */}
+        <Card className="shadow-lg border-0 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Recent Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {mockActivity.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-3 pb-4 border-b last:border-b-0">
+                  <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.action}</p>
+                    <p className="text-xs text-muted-foreground">{item.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="shadow-lg border-red-200 bg-red-50/80 dark:bg-red-900/20 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Danger Zone
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Once you delete your account, there is no going back. Please be certain.
+            </p>
+            
+            {!deleteConfirm ? (
+              <Button
+                variant="destructive"
+                onClick={() => setDeleteConfirm(true)}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Account
+              </Button>
+            ) : (
+              <div className="space-y-4 p-4 border border-red-300 rounded-lg bg-red-50 dark:bg-red-900/30">
+                <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-medium">
+                  <AlertTriangle className="h-4 w-4" />
+                  Are you absolutely sure?
+                </div>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  This action cannot be undone. This will permanently delete your account and remove all associated data.
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="destructive" onClick={handleDelete}>
+                    Yes, Delete My Account
+                  </Button>
+                  <Button variant="outline" onClick={() => setDeleteConfirm(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {deleteMsg && (
+              <Alert className="bg-green-50 border-green-200">
+                <AlertDescription className="text-green-800">{deleteMsg}</AlertDescription>
+              </Alert>
+            )}
+            {deleteErr && (
+              <Alert className="bg-red-50 border-red-200">
+                <AlertDescription className="text-red-800">{deleteErr}</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

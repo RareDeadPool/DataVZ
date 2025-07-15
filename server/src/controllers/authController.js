@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../utils/sendEmail');
+const crypto = require('crypto');
 
 exports.register = async (req, res) => {
   try {
@@ -90,17 +92,46 @@ exports.uploadAvatar = async (req, res) => {
   }
 };
 
+// Request password change (send email with token)
+exports.requestPasswordChange = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Email is required.' });
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    // Generate token
+    const token = crypto.randomBytes(32).toString('hex');
+    user.passwordChangeToken = token;
+    user.passwordChangeTokenExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+    await user.save();
+    // Send email
+    const link = `${process.env.CLIENT_URL || 'http://localhost:5173'}/change-password?token=${token}&email=${encodeURIComponent(email)}`;
+    await sendEmail({
+      to: email,
+      subject: 'Change your password',
+      text: `Click the link to change your password: ${link}`,
+      html: `<p>Click the link to change your password:</p><p><a href="${link}">${link}</a></p>`
+    });
+    res.json({ message: 'Password change email sent.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// Change password with token
 exports.changePassword = async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
-  if (!currentPassword || !newPassword) {
-    return res.status(400).json({ message: 'Current and new password are required.' });
+  const { email, token, newPassword } = req.body;
+  if (!email || !token || !newPassword) {
+    return res.status(400).json({ message: 'Email, token, and new password are required.' });
   }
   try {
-    const user = await User.findById(req.user.userId);
-    if (!user) return res.status(404).json({ message: 'User not found.' });
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) return res.status(401).json({ message: 'Current password is incorrect.' });
+    const user = await User.findOne({ email, passwordChangeToken: token });
+    if (!user || !user.passwordChangeTokenExpires || user.passwordChangeTokenExpires < Date.now()) {
+      return res.status(400).json({ message: 'Invalid or expired token.' });
+    }
     user.password = await bcrypt.hash(newPassword, 10);
+    user.passwordChangeToken = null;
+    user.passwordChangeTokenExpires = null;
     await user.save();
     res.json({ message: 'Password changed successfully.' });
   } catch (err) {

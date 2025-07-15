@@ -40,6 +40,7 @@ import axios from 'axios';
 import api from '@/services/api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const Index = () => {
   const { projectId } = useParams();
@@ -87,6 +88,12 @@ const Index = () => {
         if (!projectId) return;
         const files = await getUploadsByProject(projectId);
         setUploadedFiles(files);
+        // Auto-select the first file if none is selected and files exist
+        if (files.length > 0 && !selectedFileId) {
+          const firstFileId = files[0]._id || files[0].id;
+          setSelectedFileId(firstFileId);
+          handleFileSelect(firstFileId);
+        }
       } catch (err) {
         setFileError(err.message);
       } finally {
@@ -94,6 +101,8 @@ const Index = () => {
       }
     };
     fetchFiles();
+    // Only run when projectId changes, not selectedFileId
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   // Fetch project details on mount
@@ -123,9 +132,7 @@ const Index = () => {
   const handleFileUpload = async (file) => {
     setFileError("");
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      if (projectId) formData.append('projectId', projectId);
+      console.log('Uploading file with projectId:', projectId); // Debug
       const result = await uploadExcelFile(file, projectId);
       // Re-fetch files after upload
       const files = await getUploadsByProject(projectId);
@@ -230,7 +237,14 @@ const Index = () => {
     setSelectedFileId(fileId);
     try {
       const file = await getUploadById(fileId);
-      setExcelData(file.data || []);
+      console.log('Fetched file for preview:', file); // Debug log
+      // Use preview if available, otherwise fall back to data
+      const previewData = (file.preview && Array.isArray(file.preview) && file.preview.length > 0)
+        ? file.preview
+        : (file.data && Array.isArray(file.data) && file.data.length > 0)
+          ? file.data
+          : [];
+      setExcelData(previewData);
     } catch (err) {
       setExcelData([]);
     }
@@ -290,9 +304,9 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-zinc-900">
+    <div className="min-h-screen bg-white dark:bg-[#0a0f1a]">
       {/* Header */}
-      <header className="bg-card dark:bg-zinc-900 border-b border-border sticky top-0 z-50">
+      <header className="bg-white dark:bg-[#0a0f1a] border-b border-border sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -332,7 +346,7 @@ const Index = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Progress Overview */}
-        <Card className="mb-8 bg-card dark:bg-zinc-900 border border-border">
+        <Card className="mb-8 bg-white dark:bg-[#0a0f1a] border border-border">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
@@ -361,7 +375,7 @@ const Index = () => {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-card dark:bg-zinc-900 border border-border">
+          <TabsList className="grid w-full grid-cols-4 bg-white dark:bg-[#0a0f1a] border border-border">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Eye className="w-4 h-4" />
               Overview
@@ -383,7 +397,7 @@ const Index = () => {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="bg-card dark:bg-zinc-900 border border-border">
+              <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -395,7 +409,7 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card dark:bg-zinc-900 border border-border">
+              <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -407,7 +421,7 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card dark:bg-zinc-900 border border-border">
+              <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -418,7 +432,7 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card dark:bg-zinc-900 border border-border">
+              <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -442,7 +456,7 @@ const Index = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Button 
-                    className="h-24 flex flex-col items-center justify-center space-y-2 bg-muted dark:bg-zinc-800 text-primary border border-border"
+                    className="h-24 flex flex-col items-center justify-center space-y-2 bg-white dark:bg-[#0a0f1a] text-primary border border-border"
                     variant="outline"
                     onClick={() => setActiveTab('data')}
                   >
@@ -451,7 +465,7 @@ const Index = () => {
                   </Button>
                   
                   <Button 
-                    className="h-24 flex flex-col items-center justify-center space-y-2 bg-muted dark:bg-zinc-800 text-primary border border-border"
+                    className="h-24 flex flex-col items-center justify-center space-y-2 bg-white dark:bg-[#0a0f1a] text-primary border border-border"
                     variant="outline"
                     onClick={() => setShowChartModal(true)}
                   >
@@ -465,7 +479,7 @@ const Index = () => {
             </Card>
 
             {/* Recent Activity */}
-            <Card className="bg-card dark:bg-zinc-900 border border-border">
+            <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
@@ -555,7 +569,7 @@ const Index = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <DataTable data={selectedFileId && excelData.length > 0 ? excelData : null} />
+                    <DataTable data={excelData} />
                   </CardContent>
                 </Card>
               </div>

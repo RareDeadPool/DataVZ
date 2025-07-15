@@ -17,7 +17,8 @@ import {
   Clock, 
   Trash2,
   Edit,
-  Settings
+  Settings,
+  Copy
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -36,6 +37,8 @@ import {
   clearDeleteError,
 
 } from '../../store/slices/projectsSlice';
+
+import { shareProject } from '../../services/api';
 
 const templates = [
   {
@@ -84,10 +87,12 @@ export default function ProjectsPage() {
 
   const user = useSelector(state => state.auth.user);
 
+  // Restore canEditProject and canDeleteProject
+  const canEditProject = true; // User can always edit their own projects
+  const canDeleteProject = true; // User can always delete their own projects
+
   // Local state
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [viewMode, setViewMode] = useState("grid");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -98,19 +103,19 @@ export default function ProjectsPage() {
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [localError, setLocalError] = useState(null);
 
-  // Computed values
-  const currentUserId = user?._id || user?.id;
-  const canEditProject = true; // User can always edit their own projects
-  const canDeleteProject = true; // User can always delete their own projects
-
+  // Send Project (Share) state
+  const [showSendDialog, setShowSendDialog] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareError, setShareError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   // Filtered projects
   const filteredProjects = projects.filter((project) => {
     const projectName = typeof project.name === 'string' ? project.name : (project.name?.name || '');
     const matchesSearch = projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || project.status?.toLowerCase() === filterStatus;
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
 
   // Initialize data
@@ -135,7 +140,6 @@ export default function ProjectsPage() {
   // Handlers
   const handleSelectProject = (project) => {
     dispatch(setSelectedProject(project));
-    setSearchTerm("");
   };
 
   const handleCreateProject = async () => {
@@ -181,6 +185,8 @@ export default function ProjectsPage() {
     }));
     if (!updateError) {
       setShowEditModal(false);
+      // Force refresh projects and selected project after update
+      dispatch(fetchProjects());
     }
   };
 
@@ -192,6 +198,28 @@ export default function ProjectsPage() {
     }
   };
 
+  const handleSendProject = async () => {
+    if (!selectedProject) return;
+    setShareLoading(true);
+    setShareError('');
+    setShareLink('');
+    try {
+      const data = await shareProject(selectedProject._id);
+      setShareLink(data.shareLink);
+    } catch (err) {
+      setShareError(err?.response?.data?.error || 'Failed to generate share link');
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (shareLink) {
+      navigator.clipboard.writeText(shareLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
 
 
   const handleContextMenu = (e, project) => {
@@ -221,7 +249,7 @@ export default function ProjectsPage() {
         </div>
         {/* Show modal if just created */}
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-          <DialogContent>
+          <DialogContent description="Create a new project">
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
             </DialogHeader>
@@ -269,118 +297,73 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full p-6">
+      <div className="flex items-center justify-between mb-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
           <p className="text-muted-foreground">Manage your data visualization projects and dashboards</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
-        </div>
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Project
+        </Button>
       </div>
-
-      {/* Error Display */}
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-
-      {/* Project Tabs */}
-      {projects.length > 0 && (
-        <Tabs 
-          value={selectedProject?._id} 
-          onValueChange={(value) => {
-            const project = projects.find(p => p._id === value);
-            if (project) handleSelectProject(project);
-          }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <TabsList className="grid w-full max-w-md" style={{gridTemplateColumns: `repeat(${Math.min(projects.length, 4)}, 1fr)`}}>
-              {projects.slice(0, 4).map(project => (
-                <DropdownMenu 
-                  key={project._id} 
-                  open={contextMenuOpen && contextMenuProject?._id === project._id} 
-                  onOpenChange={setContextMenuOpen}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <TabsTrigger
-                      value={project._id}
-                      className="text-sm"
-                      onContextMenu={(e) => handleContextMenu(e, project)}
-                    >
-                      {typeof project.name === 'string' ? project.name : (project.name?.name || 'Unknown Project')}
-                    </TabsTrigger>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setEditProjectForm({
-                          name: project.name,
-                          description: project.description || '',
-                          category: project.category || ''
-                        });
-                        setShowEditModal(true);
-                        setContextMenuOpen(false);
-                      }}
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit Project
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => {
-                        setShowDeleteModal(true);
-                        setContextMenuOpen(false);
-                      }}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Project
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ))}
-            </TabsList>
-            {projects.length > 4 && (
-              <Select 
-                value={selectedProject?._id} 
-                onValueChange={(value) => {
-                  const project = projects.find(p => p._id === value);
-                  if (project) handleSelectProject(project);
-                }}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="More projects..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.slice(4).map(project => (
-                    <SelectItem key={project._id} value={project._id}>
-                      {typeof project.name === 'string' ? project.name : (project.name?.name || 'Unknown Project')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          {projects.map(project => (
-            <TabsContent key={project._id} value={project._id} className="space-y-6">
-              {/* Open Workspace Button */}
-              <div className="flex justify-end mb-2">
+      <div className="flex flex-1 gap-8">
+        {/* Project List */}
+        <div className="w-80 flex-shrink-0 space-y-2 overflow-y-auto">
+          {filteredProjects.length === 0 && (
+            <div className="text-muted-foreground text-center py-8">No projects found.</div>
+          )}
+          {filteredProjects.map(project => (
+            <Card
+              key={project._id}
+              className={`cursor-pointer border-2 ${selectedProject && selectedProject._id === project._id ? 'border-primary' : 'border-transparent'} transition-colors`}
+              onClick={() => handleSelectProject(project)}
+            >
+              <CardContent className="p-4 flex flex-col gap-1">
+                <div className="font-semibold text-lg truncate">{project.name}</div>
+                <div className="text-xs text-muted-foreground truncate">{project.description || 'No description'}</div>
+                <div className="text-xs text-muted-foreground">{project.category || 'Uncategorized'}</div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        {/* Project Details Panel */}
+        <div className="flex-1">
+          {selectedProject ? (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-bold">{selectedProject.name}</h2>
+                  <p className="text-muted-foreground">{selectedProject.description || 'No description'}</p>
+                  <p className="text-xs text-muted-foreground">Category: {selectedProject.category || 'Uncategorized'}</p>
+                </div>
                 <Button
                   variant="primary"
-                  onClick={() => navigate(`/workspace/${project._id}`)}
+                  onClick={() => navigate(`/workspace/${selectedProject._id}`)}
                   className="flex items-center gap-2"
                 >
                   <BarChart3 className="h-4 w-4" />
                   Open Workspace
                 </Button>
+                <Button
+                  variant="outline"
+                  className="ml-2 flex items-center gap-2"
+                  onClick={() => {
+                    setShowSendDialog(true);
+                    setShareLink('');
+                    setShareError('');
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                  Send Project
+                </Button>
               </div>
-              {/* Project Overview Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                   <CardContent className="p-4 flex items-center gap-3">
@@ -389,13 +372,10 @@ export default function ProjectsPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium">Charts</p>
-                      <p className="text-2xl font-bold">{project.charts?.length || 0}</p>
+                      <p className="text-2xl font-bold">{selectedProject.charts?.length || 0}</p>
                     </div>
                   </CardContent>
                 </Card>
-                
-
-                
                 <Card>
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className="p-2 bg-muted/50 rounded-lg">
@@ -404,92 +384,71 @@ export default function ProjectsPage() {
                     <div>
                       <p className="text-sm font-medium">Created</p>
                       <p className="text-sm font-semibold">
-                        {project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'N/A'}
+                        {selectedProject.createdAt ? new Date(selectedProject.createdAt).toLocaleDateString() : 'N/A'}
                       </p>
                     </div>
                   </CardContent>
                 </Card>
               </div>
-
-              {/* Project Management */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Project Settings Card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="h-5 w-5" />
-                      Project Settings
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Project Name</label>
-                      <div className="flex gap-2">
-                        <Input value={typeof project.name === 'string' ? project.name : (project.name?.name || 'Unknown Project')} disabled className="flex-1" />
-                        {canEditProject && (
-                          <Button 
-                            variant="outline" 
-                            size="icon"
-                            onClick={() => { 
-                              setEditProjectForm({
-                                name: project.name,
-                                description: project.description || '',
-                                category: project.category || ''
-                              });
-                              setShowEditModal(true); 
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Project Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Project Name</label>
+                    <div className="flex gap-2">
+                      <Input value={selectedProject.name} disabled className="flex-1" />
+                      {canEditProject && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            setEditProjectForm({
+                              name: selectedProject.name,
+                              description: selectedProject.description || '',
+                              category: selectedProject.category || ''
+                            });
+                            setShowEditModal(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Description</label>
-                      <p className="text-sm text-muted-foreground">
-                        {project.description || 'No description'}
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Category</label>
-                      <p className="text-sm text-muted-foreground">
-                        {project.category || 'Uncategorized'}
-                      </p>
-                    </div>
-                    
-                    {canDeleteProject && (
-                      <Button 
-                        variant="destructive" 
-                        className="w-full" 
-                        onClick={() => setShowDeleteModal(true)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Project
-                      </Button>
-                    )}
-
-
-                  </CardContent>
-                </Card>
-
-
-
-
-              </div>
-
-
-
-
-            </TabsContent>
-          ))}
-        </Tabs>
-      )}
-
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Description</label>
+                    <p className="text-sm text-muted-foreground">{selectedProject.description || 'No description'}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Category</label>
+                    <p className="text-sm text-muted-foreground">{selectedProject.category || 'Uncategorized'}</p>
+                  </div>
+                  {canDeleteProject && (
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => setShowDeleteModal(true)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Project
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="text-muted-foreground text-center py-8">Select a project to view details.</div>
+          )}
+        </div>
+      </div>
       {/* Modals */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent>
+        <DialogContent description="Create a new project">
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
           </DialogHeader>
@@ -534,7 +493,7 @@ export default function ProjectsPage() {
       </Dialog>
 
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent>
+        <DialogContent description="Edit the selected project">
           <DialogHeader>
             <DialogTitle>Edit Project</DialogTitle>
           </DialogHeader>
@@ -576,7 +535,7 @@ export default function ProjectsPage() {
       </Dialog>
 
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent>
+        <DialogContent description="Delete the selected project">
           <DialogHeader>
             <DialogTitle>Delete Project</DialogTitle>
           </DialogHeader>
@@ -599,6 +558,42 @@ export default function ProjectsPage() {
               <Alert variant="destructive">
                 <AlertDescription>{deleteError}</AlertDescription>
               </Alert>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Project Dialog */}
+      <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+        <DialogContent description="Share this project with another user.">
+          <DialogHeader>
+            <DialogTitle>Send Project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Button
+              onClick={handleSendProject}
+              disabled={shareLoading || !selectedProject}
+              className="w-full"
+            >
+              {shareLoading ? 'Generating...' : 'Generate Share Link'}
+            </Button>
+            {shareError && (
+              <Alert variant="destructive">
+                <AlertDescription>{shareError}</AlertDescription>
+              </Alert>
+            )}
+            {shareLink && (
+              <div className="flex flex-col gap-2">
+                <div className="text-sm font-medium">Share this link:</div>
+                <div className="flex items-center gap-2">
+                  <Input value={shareLink} readOnly className="flex-1" />
+                  <Button variant="outline" size="icon" onClick={handleCopyLink}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  {copied && <span className="text-xs text-green-600">Copied!</span>}
+                </div>
+                <div className="text-xs text-muted-foreground">The recipient must log in and accept the project. It will be added as their own copy.</div>
+              </div>
             )}
           </div>
         </DialogContent>

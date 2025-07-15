@@ -34,6 +34,7 @@ import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { DataTable } from "./DataTable";
 
 // AI function to generate chart configurations
 const askGeminiAI = async ({ prompt, data }) => {
@@ -426,6 +427,14 @@ export default function VizardPage() {
                       )}
                     </div>
 
+                    {/* Data Table Preview */}
+                    {excelData && Array.isArray(excelData) && excelData.length > 0 && (
+                      <div className="my-4">
+                        {/* Only show first 10 rows for preview */}
+                        <DataTable data={excelData.slice(0, 10)} />
+                      </div>
+                    )}
+
                     <Button 
                       onClick={handleSendMessage} 
                       disabled={!message.trim() || aiLoading}
@@ -512,16 +521,14 @@ export default function VizardPage() {
                       <Button
                         key={index}
                         variant="outline"
-                        className={
-                          `w-full justify-start h-auto p-4 bg-[#f4f6fa] border border-[#d1d9e6] text-[#2d3a4a] hover:bg-[#e3e8f0] transition-colors`
-                        }
+                        className="w-full justify-start h-auto p-4 bg-card border border-border text-foreground hover:bg-muted transition-colors dark:bg-zinc-900 dark:text-white dark:border-zinc-800 dark:hover:bg-zinc-800"
                         onClick={() => handleSamplePrompt(samplePrompts[index])}
                       >
                         <div className="flex items-start gap-3">
-                          <action.icon className="h-5 w-5 mt-0.5 text-[#2d3a4a]" />
+                          <action.icon className="h-5 w-5 mt-0.5 text-muted-foreground dark:text-zinc-300" />
                           <div className="text-left">
-                            <p className="font-medium text-sm text-[#2d3a4a]">{action.title}</p>
-                            <p className="text-xs text-[#4b5a6a]">{action.description}</p>
+                            <p className="font-medium text-sm text-foreground dark:text-white">{action.title}</p>
+                            <p className="text-xs text-muted-foreground dark:text-zinc-400">{action.description}</p>
                           </div>
                         </div>
                       </Button>

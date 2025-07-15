@@ -69,7 +69,7 @@ export function RecentUploads() {
   }
 
   return (
-    <Card className="bg-card dark:bg-zinc-900 text-foreground dark:text-white">
+    <Card className="bg-white dark:bg-[#0a0f1a] text-foreground dark:text-white">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -89,8 +89,8 @@ export function RecentUploads() {
         ) : (
           <div className="space-y-4">
             {uploads && uploads.map((upload) => (
-              <div key={upload?._id || Math.random()} className="flex items-start gap-3 p-3 bg-muted/50 dark:bg-zinc-800 rounded-lg">
-                <div className="p-2 bg-background dark:bg-zinc-900 rounded">
+              <div key={upload?._id || Math.random()} className="flex items-start gap-3 p-3 bg-white/80 dark:bg-[#0a0f1a]/80 rounded-lg">
+                <div className="p-2 bg-white dark:bg-[#0a0f1a] rounded">
                   <FileSpreadsheet className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -119,7 +119,7 @@ export function RecentUploads() {
         )}
       </CardContent>
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-2xl bg-background dark:bg-zinc-900 text-foreground dark:text-white">
+        <DialogContent className="max-w-2xl bg-white dark:bg-[#0a0f1a] text-foreground dark:text-white">
           <DialogHeader>
             <DialogTitle>Data Preview</DialogTitle>
           </DialogHeader>
@@ -130,9 +130,9 @@ export function RecentUploads() {
                   <tr>
                     {previewData && previewData.length > 0 && previewData[0] ? 
                       Object.keys(previewData[0]).map((key) => (
-                        <th key={key} className="px-2 py-1 border-b bg-muted dark:bg-zinc-800 text-left">{key}</th>
+                        <th key={key} className="px-2 py-1 border-b bg-white dark:bg-[#0a0f1a] text-left">{key}</th>
                       ))
-                      : <th className="px-2 py-1 border-b bg-muted dark:bg-zinc-800 text-left">No data</th>
+                      : <th className="px-2 py-1 border-b bg-white dark:bg-[#0a0f1a] text-left">No data</th>
                     }
                   </tr>
                 </thead>

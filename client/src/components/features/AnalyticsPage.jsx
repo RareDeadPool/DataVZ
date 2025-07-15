@@ -15,7 +15,6 @@ import {
   Activity, 
   PieChart, 
   Upload,
-  Calendar,
   Target,
   Download,
   Share2,
@@ -26,9 +25,7 @@ import {
   FileSpreadsheet,
   Brain,
   Clock,
-  Star,
-  Search,
-  Filter
+  Search
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -136,32 +133,28 @@ export default function AnalyticsPage() {
       value: projects.length || 0,
       icon: Target,
       change: '+12%',
-      trend: 'up',
-      color: 'bg-blue-50 text-blue-700 border-blue-200'
+      trend: 'up'
     },
     { 
       title: 'Charts Generated', 
       value: charts.length || 0,
       icon: BarChart3,
       change: '+8%',
-      trend: 'up',
-      color: 'bg-green-50 text-green-700 border-green-200'
+      trend: 'up'
     },
     { 
       title: 'Files Uploaded', 
       value: uploads.length || 0,
       icon: Upload,
       change: '+15%',
-      trend: 'up',
-      color: 'bg-purple-50 text-purple-700 border-purple-200'
+      trend: 'up'
     },
     { 
       title: 'Hours Saved', 
       value: ((projects.length || 0) * 2 + (charts.length || 0)).toFixed(1),
       icon: Clock,
       change: '+5%',
-      trend: 'up',
-      color: 'bg-orange-50 text-orange-700 border-orange-200'
+      trend: 'up'
     },
   ];
 
@@ -180,8 +173,8 @@ export default function AnalyticsPage() {
         {
           label: 'Charts Created',
           data: sortedWeeks.map(w => weeks[w]),
-          borderColor: 'rgba(59,130,246,1)',
-          backgroundColor: 'rgba(59,130,246,0.2)',
+          borderColor: 'hsl(var(--primary))',
+          backgroundColor: 'hsl(var(--primary) / 0.1)',
           tension: 0.4,
           fill: true,
         },
@@ -220,10 +213,10 @@ export default function AnalyticsPage() {
         label: 'Chart Types',
         data: Object.values(chartTypeCounts),
         backgroundColor: [
-          'rgba(59,130,246,0.7)',
-          'rgba(16,185,129,0.7)',
-          'rgba(251,191,36,0.7)',
-          'rgba(244,63,94,0.7)',
+          'hsl(var(--primary) / 0.8)',
+          'hsl(var(--primary) / 0.6)',
+          'hsl(var(--primary) / 0.4)',
+          'hsl(var(--primary) / 0.2)',
         ],
         borderWidth: 1,
       },
@@ -241,8 +234,8 @@ export default function AnalyticsPage() {
       {
         label: 'Projects',
         data: Object.values(categoryCounts),
-        backgroundColor: 'rgba(59,130,246,0.5)',
-        borderColor: 'rgba(59,130,246,1)',
+        backgroundColor: 'hsl(var(--primary) / 0.2)',
+        borderColor: 'hsl(var(--primary))',
         borderWidth: 1,
       },
     ],
@@ -255,10 +248,10 @@ export default function AnalyticsPage() {
       label: 'File Types',
       data: analyticsSummary.fileTypeAgg.map(f => f.count),
       backgroundColor: [
-        'rgba(59,130,246,0.7)',
-        'rgba(16,185,129,0.7)',
-        'rgba(251,191,36,0.7)',
-        'rgba(244,63,94,0.7)',
+        'hsl(var(--primary) / 0.8)',
+        'hsl(var(--primary) / 0.6)',
+        'hsl(var(--primary) / 0.4)',
+        'hsl(var(--primary) / 0.2)',
       ],
     }],
   } : null;
@@ -269,8 +262,8 @@ export default function AnalyticsPage() {
     datasets: [{
       label: 'Uploads',
       data: analyticsSummary.weekAgg.map(w => w.count),
-      borderColor: 'rgba(59,130,246,1)',
-      backgroundColor: 'rgba(59,130,246,0.2)',
+      borderColor: 'hsl(var(--primary))',
+      backgroundColor: 'hsl(var(--primary) / 0.1)',
       tension: 0.4,
       fill: true,
     }],
@@ -282,8 +275,8 @@ export default function AnalyticsPage() {
     datasets: [{
       label: 'Uploads by Project',
       data: analyticsSummary.projectAgg.map(p => p.count),
-      backgroundColor: 'rgba(59,130,246,0.5)',
-      borderColor: 'rgba(59,130,246,1)',
+      backgroundColor: 'hsl(var(--primary) / 0.2)',
+      borderColor: 'hsl(var(--primary))',
       borderWidth: 1,
     }],
   } : null;
@@ -444,14 +437,12 @@ export default function AnalyticsPage() {
     {
       title: 'Performance Insight',
       message: `You've created ${charts.length} charts this month. Consider creating templates for frequently used chart types.`,
-      icon: Brain,
-      color: 'border-blue-200 bg-blue-50'
+      icon: Brain
     },
     {
       title: 'Data Quality Tip',
       message: `${uploads.length} files uploaded. Review data quality to ensure accurate visualizations.`,
-      icon: Target,
-      color: 'border-green-200 bg-green-50'
+      icon: Target
     },
   ];
 
@@ -470,27 +461,27 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-zinc-900">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-card dark:bg-zinc-900">
-        <div className="container mx-auto px-6 py-4">
+      <div className="border-b bg-card shadow-sm">
+        <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-primary" />
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-muted rounded-xl">
+                <BarChart3 className="h-7 w-7 text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
-                <p className="text-sm text-muted-foreground">Comprehensive insights and performance metrics</p>
+                <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
+                <p className="text-muted-foreground mt-1">Comprehensive insights and performance metrics</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 mr-4">
-                <label className="text-sm font-medium">Time Range:</label>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-muted-foreground">Time Range:</label>
                 <select
                   value={timeRange}
                   onChange={e => setTimeRange(e.target.value)}
-                  className="border rounded px-3 py-1 bg-background text-sm"
+                  className="border border-input rounded-lg px-3 py-2 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="7d">Last 7 days</option>
                   <option value="30d">Last 30 days</option>
@@ -498,7 +489,7 @@ export default function AnalyticsPage() {
                   <option value="custom">Custom</option>
                 </select>
               </div>
-              <Button onClick={() => setShowModal(true)} className="flex items-center gap-2">
+              <Button onClick={() => setShowModal(true)} className="flex items-center gap-2 shadow-sm">
                 <Plus className="h-4 w-4" />
                 New Project
               </Button>
@@ -507,54 +498,57 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-6">
+      <div className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-4 mb-8 bg-muted/50">
+            <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-background">
               <Target className="h-4 w-4" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-2">
+            <TabsTrigger value="insights" className="flex items-center gap-2 data-[state=active]:bg-background">
               <PieChart className="h-4 w-4" />
               Insights
             </TabsTrigger>
-            <TabsTrigger value="activity" className="flex items-center gap-2">
+            <TabsTrigger value="activity" className="flex items-center gap-2 data-[state=active]:bg-background">
               <Activity className="h-4 w-4" />
               Activity
             </TabsTrigger>
-            <TabsTrigger value="export" className="flex items-center gap-2">
+            <TabsTrigger value="export" className="flex items-center gap-2 data-[state=active]:bg-background">
               <Download className="h-4 w-4" />
               Export
             </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-8">
             {/* KPI Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {kpiData.every(item => !item.value) ? (
-                <div className="col-span-4 text-center text-muted-foreground py-8">
-                  <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No data available yet</p>
+                <div className="col-span-4 text-center text-muted-foreground py-12">
+                  <Target className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                  <p className="text-lg">No data available yet</p>
+                  <p className="text-sm">Start creating projects to see your analytics</p>
                 </div>
               ) : (
                 kpiData.map((item, idx) => (
                   <Card
                     key={idx}
                     onClick={() => handleKpiClick(idx)}
-                    className={`cursor-pointer transition-all hover:shadow-md ${item.color} ${selectedKPI === idx ? 'ring-2 ring-primary' : ''}`}
+                    className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-2 ${selectedKPI === idx ? 'ring-2 ring-primary border-primary/50' : 'border-border hover:border-primary/30'}`}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium opacity-70">{item.title}</p>
-                          <p className="text-2xl font-bold">{item.value}</p>
-                          <div className="flex items-center gap-1 mt-1">
-                            <TrendingUp className="h-3 w-3 text-green-600" />
-                            <span className="text-xs text-green-600">{item.change}</span>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-muted-foreground">{item.title}</p>
+                          <p className="text-3xl font-bold tracking-tight">{item.value}</p>
+                          <div className="flex items-center gap-1">
+                            <TrendingUp className="h-3 w-3 text-primary" />
+                            <span className="text-xs text-primary font-medium">{item.change}</span>
                           </div>
                         </div>
-                        {React.createElement(item.icon, { className: "h-8 w-8 opacity-60" })}
+                        <div className="p-3 bg-muted/50 rounded-xl">
+                          {React.createElement(item.icon, { className: "h-8 w-8 text-primary" })}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -563,21 +557,22 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Trends Chart */}
-            <Card ref={trendsSectionRef}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
+            <Card ref={trendsSectionRef} className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3">
+                  <TrendingUp className="h-6 w-6 text-primary" />
                   Performance Trends
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {trendsData.labels.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-12">
-                    <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No trend data available</p>
+                  <div className="text-center text-muted-foreground py-16">
+                    <TrendingUp className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                    <p className="text-lg">No trend data available</p>
+                    <p className="text-sm">Create some charts to see performance trends</p>
                   </div>
                 ) : (
-                  <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                  <div className="h-80 bg-muted/20 rounded-xl flex items-center justify-center p-4">
                     <canvas ref={chartRef}></canvas>
                   </div>
                 )}
@@ -585,22 +580,24 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* AI Suggestions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3">
+                  <Brain className="h-6 w-6 text-primary" />
                   AI-Powered Insights
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2">
                   {aiSuggestions.map((suggestion, idx) => (
-                    <div key={idx} className={`p-4 rounded-lg border ${suggestion.color}`}>
-                      <div className="flex items-start gap-3">
-                        <suggestion.icon className="h-5 w-5 mt-0.5" />
-                        <div>
-                          <h4 className="font-medium text-sm">{suggestion.title}</h4>
-                          <p className="text-xs opacity-70 mt-1">{suggestion.message}</p>
+                    <div key={idx} className="p-6 rounded-xl border bg-muted/20 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="p-2 bg-background rounded-lg">
+                          <suggestion.icon className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="font-semibold text-sm">{suggestion.title}</h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{suggestion.message}</p>
                         </div>
                       </div>
                     </div>
@@ -611,38 +608,44 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           {/* Insights Tab */}
-          <TabsContent value="insights" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
+          <TabsContent value="insights" className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle>Chart Type Distribution</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5 text-primary" />
+                    Chart Type Distribution
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {chartTypesData.labels.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-12">
-                      <PieChart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No chart data available</p>
+                    <div className="text-center text-muted-foreground py-16">
+                      <PieChart className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg">No chart data available</p>
                     </div>
                   ) : (
-                    <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                    <div className="h-80 bg-muted/20 rounded-xl flex items-center justify-center p-4">
                       <canvas ref={pieRef}></canvas>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle>Project Categories</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    Project Categories
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {projectCategoriesData.labels.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-12">
-                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No project data available</p>
+                    <div className="text-center text-muted-foreground py-16">
+                      <BarChart3 className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg">No project data available</p>
                     </div>
                   ) : (
-                    <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                    <div className="h-80 bg-muted/20 rounded-xl flex items-center justify-center p-4">
                       <canvas ref={barRef}></canvas>
                     </div>
                   )}
@@ -650,36 +653,42 @@ export default function AnalyticsPage() {
               </Card>
 
               {/* File Analytics */}
-              <Card>
+              <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle>File Type Breakdown</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileSpreadsheet className="h-5 w-5 text-primary" />
+                    File Type Breakdown
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!fileTypeChartData ? (
-                    <div className="text-center text-muted-foreground py-12">
-                      <FileSpreadsheet className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No file data available</p>
+                    <div className="text-center text-muted-foreground py-16">
+                      <FileSpreadsheet className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg">No file data available</p>
                     </div>
                   ) : (
-                    <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                    <div className="h-80 bg-muted/20 rounded-xl flex items-center justify-center p-4">
                       <canvas id="fileTypeChart"></canvas>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="shadow-sm">
                 <CardHeader>
-                  <CardTitle>Upload Trends</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Upload className="h-5 w-5 text-primary" />
+                    Upload Trends
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!uploadTrendsData ? (
-                    <div className="text-center text-muted-foreground py-12">
-                      <Upload className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No upload data available</p>
+                    <div className="text-center text-muted-foreground py-16">
+                      <Upload className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg">No upload data available</p>
                     </div>
                   ) : (
-                    <div className="h-64 bg-muted/20 dark:bg-zinc-800/40 rounded-lg flex items-center justify-center">
+                    <div className="h-80 bg-muted/20 rounded-xl flex items-center justify-center p-4">
                       <canvas id="uploadTrendsChart"></canvas>
                     </div>
                   )}
@@ -689,45 +698,46 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           {/* Activity Tab */}
-          <TabsContent value="activity" className="space-y-6">
-            <Card>
-              <CardHeader>
+          <TabsContent value="activity" className="space-y-8">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-3">
+                    <Activity className="h-6 w-6 text-primary" />
                     Recent Activity
                   </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-3 bg-muted/30 rounded-lg p-1">
+                    <Search className="h-4 w-4 text-muted-foreground ml-3" />
                     <Input
                       placeholder="Search activities..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-64"
+                      className="w-64 border-0 bg-transparent focus:ring-0"
                     />
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {filteredActivities.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-12">
-                      <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No recent activity found</p>
+                    <div className="text-center text-muted-foreground py-16">
+                      <Activity className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg">No recent activity found</p>
+                      <p className="text-sm">Activities will appear here as you use the platform</p>
                     </div>
                   ) : (
                     filteredActivities.map((activity, idx) => (
-                      <div key={idx} className="flex items-center gap-4 p-3 rounded-lg border bg-card dark:bg-zinc-900">
-                         <div className="p-2 rounded-full bg-muted dark:bg-zinc-800">
-                           {React.createElement(activity.icon, { className: "h-4 w-4" })}
+                      <div key={idx} className="flex items-center gap-4 p-4 rounded-xl border bg-card/50 hover:bg-card transition-colors">
+                         <div className="p-3 rounded-xl bg-muted">
+                           {React.createElement(activity.icon, { className: "h-5 w-5 text-primary" })}
                          </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">{activity.type}</Badge>
-                            <span className="text-sm">{activity.description}</span>
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary" className="text-xs font-medium">{activity.type}</Badge>
+                            <span className="text-sm font-medium">{activity.description}</span>
                           </div>
                         </div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <div className="text-xs text-muted-foreground flex items-center gap-2 bg-muted/50 px-3 py-1 rounded-full">
                           <Clock className="h-3 w-3" />
                           {activity.time}
                         </div>
@@ -740,53 +750,63 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           {/* Export Tab */}
-          <TabsContent value="export" className="space-y-6">
-            <Card>
+          <TabsContent value="export" className="space-y-8">
+            <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-3">
+                  <Download className="h-6 w-6 text-primary" />
                   Export Analytics
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Button onClick={handleExportPDF} className="h-auto p-4 flex flex-col items-center gap-2">
-                    <FileSpreadsheet className="h-6 w-6" />
-                    <span>Export as PDF</span>
-                    <span className="text-xs opacity-70">Detailed report with all charts</span>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Button onClick={handleExportPDF} className="h-auto p-6 flex flex-col items-center gap-3 text-left">
+                    <FileSpreadsheet className="h-8 w-8" />
+                    <div className="space-y-1">
+                      <span className="font-semibold">Export as PDF</span>
+                      <p className="text-xs opacity-70">Detailed report with all charts and data</p>
+                    </div>
                   </Button>
-                  <Button onClick={handleExportCSV} variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-                    <Download className="h-6 w-6" />
-                    <span>Export as CSV</span>
-                    <span className="text-xs opacity-70">Raw data for analysis</span>
+                  <Button onClick={handleExportCSV} variant="outline" className="h-auto p-6 flex flex-col items-center gap-3 text-left">
+                    <Download className="h-8 w-8" />
+                    <div className="space-y-1">
+                      <span className="font-semibold">Export as CSV</span>
+                      <p className="text-xs opacity-70">Raw data for further analysis</p>
+                    </div>
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Share2 className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-3">
+                  <Share2 className="h-6 w-6 text-primary" />
                   Share Analytics
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Button onClick={() => setShowShareModal(true)} variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-                    <ExternalLink className="h-6 w-6" />
-                    <span>Generate Link</span>
-                    <span className="text-xs opacity-70">Create shareable URL</span>
+                <div className="grid gap-6 md:grid-cols-3">
+                  <Button onClick={() => setShowShareModal(true)} variant="outline" className="h-auto p-6 flex flex-col items-center gap-3 text-left">
+                    <ExternalLink className="h-8 w-8" />
+                    <div className="space-y-1">
+                      <span className="font-semibold">Generate Link</span>
+                      <p className="text-xs opacity-70">Create shareable URL for team access</p>
+                    </div>
                   </Button>
-                  <Button onClick={handleCopySummary} variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-                    <Copy className="h-6 w-6" />
-                    <span>Copy Summary</span>
-                    <span className="text-xs opacity-70">Copy to clipboard</span>
+                  <Button onClick={handleCopySummary} variant="outline" className="h-auto p-6 flex flex-col items-center gap-3 text-left">
+                    <Copy className="h-8 w-8" />
+                    <div className="space-y-1">
+                      <span className="font-semibold">Copy Summary</span>
+                      <p className="text-xs opacity-70">Copy formatted text to clipboard</p>
+                    </div>
                   </Button>
-                  <Button onClick={handleShareEmail} variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-                    <Mail className="h-6 w-6" />
-                    <span>Email Report</span>
-                    <span className="text-xs opacity-70">Send via email</span>
+                  <Button onClick={handleShareEmail} variant="outline" className="h-auto p-6 flex flex-col items-center gap-3 text-left">
+                    <Mail className="h-8 w-8" />
+                    <div className="space-y-1">
+                      <span className="font-semibold">Email Report</span>
+                      <p className="text-xs opacity-70">Send summary via email client</p>
+                    </div>
                   </Button>
                 </div>
               </CardContent>
@@ -797,7 +817,7 @@ export default function AnalyticsPage() {
 
       {/* Create Project Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create New Project & Upload Data</DialogTitle>
           </DialogHeader>
@@ -806,8 +826,8 @@ export default function AnalyticsPage() {
             <Input name="description" placeholder="Description" value={projectForm.description} onChange={handleProjectFormChange} />
             <Input name="category" placeholder="Category" value={projectForm.category} onChange={handleProjectFormChange} />
             <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} required />
-            {errorMsg && <div className="text-red-500 text-sm">{errorMsg}</div>}
-            {successMsg && <div className="text-green-600 text-sm">{successMsg}</div>}
+            {errorMsg && <div className="text-destructive text-sm p-3 bg-destructive/10 rounded-lg">{errorMsg}</div>}
+            {successMsg && <div className="text-primary text-sm p-3 bg-primary/10 rounded-lg">{successMsg}</div>}
           </form>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
@@ -820,7 +840,7 @@ export default function AnalyticsPage() {
 
       {/* Share Modal */}
       <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Share Analytics</DialogTitle>
           </DialogHeader>

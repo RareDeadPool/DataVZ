@@ -21,7 +21,8 @@ router.post('/login', authController.login);
 router.get('/profile', auth, authController.getProfile);
 router.put('/profile', auth, authController.updateProfile);
 router.post('/avatar', auth, upload.single('avatar'), authController.uploadAvatar);
-router.put('/password', auth, authController.changePassword);
+router.post('/request-password-change', authController.requestPasswordChange);
+router.put('/password', authController.changePassword);
 router.delete('/profile', auth, authController.deleteAccount);
 
 module.exports = router; 

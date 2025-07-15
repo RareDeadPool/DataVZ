@@ -6,6 +6,7 @@ import Dashboard from './components/features/dashboard/Dashboard';
 import AnalyticsPage from './components/features/AnalyticsPage';
 import ProjectWorkspace from './components/features/ProjectWorkspace';
 import ProjectsPage from './components/features/Projects';
+import AcceptProject from './components/features/AcceptProject';
 
 import Vizard from './components/features/AskAI';
 import SearchPage from './components/features/SearchPage';
@@ -14,6 +15,8 @@ import Profile from './components/features/Profile';
 import SettingsPage from './components/features/SettingsPage';
 import ProjectCreationTest from './components/features/ProjectCreationTest';
 import ProjectCreationDebug from './components/features/ProjectCreationDebug';
+import RequestPasswordReset from './components/features/auth/RequestPasswordReset';
+import ResetPassword from './components/features/auth/ResetPassword';
 import { ThemeProvider } from './components/common/theme-provider';
 import MainLayout from './components/layout/MainLayout';
 import { useDispatch } from 'react-redux';
@@ -50,7 +53,9 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LandingPageWithAuthNav />} />
-          <Route path="/auth" element={<AuthContainer onLogin={() => window.location.href = '/dashboard'} />} />
+          <Route path="/auth" element={<AuthContainer />} />
+          <Route path="/request-password-reset" element={<RequestPasswordReset />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
           <Route path="/analytics" element={<MainLayout><AnalyticsPage /></MainLayout>} />
           <Route path="/projects" element={<MainLayout><ProjectsPage /></MainLayout>} />
@@ -64,6 +69,7 @@ function App() {
           <Route path="/settings" element={<MainLayout><SettingsPage /></MainLayout>} />
           <Route path="/test-project" element={<MainLayout><ProjectCreationTest /></MainLayout>} />
           <Route path="/debug-project" element={<MainLayout><ProjectCreationDebug /></MainLayout>} />
+          <Route path="/accept-project" element={<AcceptProject />} />
         </Routes>
       </Router>
       <Toaster 

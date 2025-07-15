@@ -117,4 +117,14 @@ export async function fetchSharedChart(shareId) {
 export async function askGeminiSummary({ prompt, data }) {
   const res = await api.post('/ai/summary', { prompt, data });
   return res.data;
+}
+
+export async function shareProject(projectId) {
+  const res = await api.post(`/projects/${projectId}/share`);
+  return res.data;
+}
+
+export async function acceptSharedProject(token) {
+  const res = await api.post('/projects/accept-shared', { token });
+  return res.data;
 } 

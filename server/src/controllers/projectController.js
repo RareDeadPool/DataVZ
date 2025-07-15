@@ -1,4 +1,6 @@
 const Project = require('../models/Project');
+const SharedProject = require('../models/SharedProject');
+const crypto = require('crypto');
 
 // Create a new project
 exports.createProject = async (req, res) => {
@@ -141,5 +143,71 @@ exports.deleteProject = async (req, res) => {
   } catch (err) {
     console.error('Error in deleteProject:', err);
     res.status(500).json({ error: 'Failed to delete project', details: err.message });
+  }
+}; 
+
+// Share a project (generate a share token and link)
+exports.shareProject = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const projectId = req.params.id;
+
+    // Only owner can share
+    const project = await Project.findById(projectId);
+    if (!project || project.owner.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Only the project owner can share this project.' });
+    }
+
+    // Generate a secure token
+    const token = crypto.randomBytes(32).toString('hex');
+    await SharedProject.create({
+      token,
+      projectId,
+      used: false,
+    });
+
+    // Construct share link (frontend should handle /accept-project?token=...)
+    const shareLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/accept-project?token=${token}`;
+    res.json({ shareLink });
+  } catch (err) {
+    console.error('Error in shareProject:', err);
+    res.status(500).json({ error: 'Failed to generate share link' });
+  }
+};
+
+// Accept a shared project (copy to user account)
+exports.acceptSharedProject = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { token } = req.body;
+    const shared = await SharedProject.findOne({ token });
+    if (!shared || shared.used) {
+      return res.status(400).json({ error: 'Invalid or already used token.' });
+    }
+
+    // Copy the project
+    const origProject = await Project.findById(shared.projectId);
+    if (!origProject) {
+      return res.status(404).json({ error: 'Original project not found.' });
+    }
+
+    // Create a new project for the user (copy fields except owner)
+    const newProject = await Project.create({
+      name: origProject.name + ' (Copy)',
+      description: origProject.description,
+      category: origProject.category,
+      owner: userId,
+    });
+
+    // Optionally: Copy charts/files if needed (not implemented here)
+
+    shared.used = true;
+    shared.usedBy = userId;
+    await shared.save();
+
+    res.json({ success: true, newProject });
+  } catch (err) {
+    console.error('Error in acceptSharedProject:', err);
+    res.status(500).json({ error: 'Failed to accept shared project' });
   }
 }; 

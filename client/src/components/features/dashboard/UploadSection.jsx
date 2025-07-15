@@ -396,7 +396,7 @@ export function UploadSection() {
       <CardContent>
         <div
           className={`relative border-2 border-dashed rounded-lg p-12 text-center transition-colors duration-200 ${
-            dragActive ? "border-primary bg-primary/5 dark:bg-primary/20" : "border-muted-foreground/25 hover:border-muted-foreground/50 bg-background dark:bg-zinc-900"
+            dragActive ? "border-primary bg-primary/5 dark:bg-primary/20" : "border-muted-foreground/25 hover:border-muted-foreground/50 bg-white dark:bg-[#0a0f1a]"
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}

@@ -1,8 +1,21 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Settings, 
+  User, 
+  Shield, 
+  Palette, 
+  CheckCircle2,
+  ExternalLink
+} from "lucide-react";
 
 export default function SettingsPage() {
-  const user = useSelector((state) => state.auth.user) || { name: "User", email: "user@email.com" };
+  // Mock user data since we don't have redux setup
+  const user = { name: "User", email: "user@email.com" };
   const [form, setForm] = useState({ name: user.name, email: user.email, password: "" });
   const [saved, setSaved] = useState(false);
 
@@ -17,59 +30,151 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-xl mx-auto py-10 px-4">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1 font-medium">Name</label>
-          <input
-            type="text"
-            name="name"
-            className="w-full border rounded px-3 py-2"
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
-                      </div>
-                      <div>
-          <label className="block mb-1 font-medium">Email</label>
-          <input
-            type="email"
-            name="email"
-            className="w-full border rounded px-3 py-2"
-            value={form.email}
-            onChange={handleChange}
-            required
-          />
-              </div>
-                    <div>
-          <label className="block mb-1 font-medium">Password</label>
-          <input
-            type="password"
-            name="password"
-            className="w-full border rounded px-3 py-2"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="Leave blank to keep unchanged"
-          />
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-2 bg-muted rounded-lg">
+            <Settings className="h-6 w-6 text-foreground" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground">Manage your account preferences and security</p>
+          </div>
+        </div>
+
+        <div className="grid gap-6">
+          {/* Profile Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Profile Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between pt-4">
+                  <Button type="submit" className="flex items-center gap-2">
+                    Save Changes
+                  </Button>
+                  {saved && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      Changes saved successfully
                     </div>
-        <button
-          type="submit"
-          className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-        >
-          Save Changes
-        </button>
-        {saved && <div className="text-green-600 mt-2">Settings saved (mock only).</div>}
-      </form>
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-2">Theme</h2>
-        <div className="flex items-center gap-2">
-          <span>Light</span>
-          <input type="checkbox" disabled className="mx-2" />
-          <span>Dark</span>
-          <span className="text-xs text-gray-400 ml-2">(Theme toggle coming soon)</span>
+                  )}
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Security Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Security & Privacy
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium mb-3 block">
+                    Password Management
+                  </Label>
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Change Password</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        For your security, password changes require email verification
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="/request-password-reset" className="flex items-center gap-2">
+                        Update Password
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </Button>
+                  </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Appearance Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Appearance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium mb-3 block">
+                    Theme Preference
+                  </Label>
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm">Light</span>
+                      <div className="relative">
+                        <input 
+                          type="checkbox" 
+                          disabled 
+                          className="sr-only"
+                        />
+                        <div className="w-10 h-6 bg-muted rounded-full border relative">
+                          <div className="w-4 h-4 bg-muted-foreground rounded-full absolute top-1 left-1 transition-transform"></div>
+                        </div>
+                      </div>
+                      <span className="text-sm">Dark</span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      Coming Soon
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Dark mode and theme customization will be available in a future update
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -56,8 +56,8 @@ export function DataTable({ data }) {
     }
   };
 
-  if (!data || data.length === 0) {
-    return null;
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return <div className="text-muted-foreground text-center py-8">No preview data available for this file. Try uploading a different file or check backend parsing.</div>;
   }
 
   return (

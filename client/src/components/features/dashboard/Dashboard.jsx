@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const uploadedFiles = useSelector(state => state.uploadedFiles.files);
+  const [previewData, setPreviewData] = useState(null);
 
   const handleProjectFormChange = e => setProjectForm(f => ({ ...f, [e.target.name]: e.target.value }));
   const handleFileChange = e => setFile(e.target.files[0]);
@@ -48,6 +49,11 @@ export default function Dashboard() {
         body: formData,
       });
       if (!uploadRes.ok) throw new Error('Failed to upload file');
+      // Try to get preview data from response
+      const uploadResult = await uploadRes.json();
+      if (uploadResult && uploadResult.preview) {
+        setPreviewData(uploadResult.preview);
+      }
       setSuccessMsg('Project created and file uploaded!');
       setShowModal(false);
     } catch (err) {
@@ -58,7 +64,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 p-6 bg-background dark:bg-zinc-900 min-h-screen">
+    <div className="flex-1 p-6 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center mb-4">
           <div className="space-y-2">
@@ -91,7 +97,33 @@ export default function Dashboard() {
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             <UploadSection />
-            <PreviewSection />
+            {previewData ? (
+              <div className="mt-6">
+                <h3 className="font-semibold mb-2">Data Preview</h3>
+                <div className="overflow-x-auto border rounded-lg">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr>
+                        {Object.keys(previewData[0] || {}).map((key) => (
+                          <th key={key} className="px-2 py-1 border-b bg-muted text-left">{key}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewData.map((row, i) => (
+                        <tr key={i}>
+                          {Object.values(row).map((val, j) => (
+                            <td key={j} className="px-2 py-1 border-b">{val}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <PreviewSection />
+            )}
           </div>
           <div className="space-y-6">
             <RecentUploads />

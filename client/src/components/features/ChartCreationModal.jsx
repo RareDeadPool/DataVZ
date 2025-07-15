@@ -195,19 +195,19 @@ export function ChartCreationModal({
                   <Card
                     key={type.value}
                     className={`cursor-pointer transition-all hover:shadow-md ${
-                      isSelected ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-500' : 'hover:bg-slate-50 border-slate-200'
+                      isSelected
+                        ? 'ring-2 ring-blue-500 bg-blue-600 text-white border-blue-600' // main card
+                        : 'hover:bg-slate-50 border-slate-200'
                     }`}
                     onClick={() => setChartData({ ...chartData, type: type.value })}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-3">
-                        <Icon className={`w-5 h-5 ${isSelected ? 'text-blue-600' : 'text-slate-500'}`} />
-                        <div>
-                          <p className="font-medium text-sm">{type.label}</p>
-                          <p className="text-xs text-slate-500">{type.description}</p>
-                        </div>
+                    <div className="flex flex-col items-start p-4">
+                      <div className={`flex items-center gap-2 text-base font-semibold ${isSelected ? 'text-white' : ''}`}>
+                        <Icon className="h-5 w-5" />
+                        {type.label}
                       </div>
-                    </CardContent>
+                      <div className={`text-sm mt-1 ${isSelected ? 'text-white text-opacity-90' : 'text-muted-foreground'}`}>{type.description}</div>
+                    </div>
                   </Card>
                 );
               })}

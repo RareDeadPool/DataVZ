@@ -361,7 +361,7 @@ export function ExportActions({ charts, data, project }) {
 
       {/* Export Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-card dark:bg-zinc-900 border border-border">
+        <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -375,7 +375,7 @@ export function ExportActions({ charts, data, project }) {
           </CardContent>
         </Card>
 
-        <Card className="bg-card dark:bg-zinc-900 border border-border">
+        <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -389,7 +389,7 @@ export function ExportActions({ charts, data, project }) {
           </CardContent>
         </Card>
 
-        <Card className="bg-card dark:bg-zinc-900 border border-border">
+        <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -408,7 +408,7 @@ export function ExportActions({ charts, data, project }) {
 
       {/* Export Options */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-card dark:bg-zinc-900 border border-border">
+        <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
               <FileText className="w-5 h-5" />
@@ -452,7 +452,7 @@ export function ExportActions({ charts, data, project }) {
           </CardContent>
         </Card>
 
-        <Card className="bg-card dark:bg-zinc-900 border border-border">
+        <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
               <Image className="w-5 h-5" />
@@ -490,7 +490,7 @@ export function ExportActions({ charts, data, project }) {
 
       {/* Individual Chart Export */}
       {charts.length > 0 && (
-        <Card className="bg-card dark:bg-zinc-900 border border-border">
+        <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
               <FileImage className="w-5 h-5" />
@@ -524,13 +524,13 @@ export function ExportActions({ charts, data, project }) {
 
       {/* Export Preview */}
       {charts.length > 0 && (
-        <Card className="bg-card dark:bg-zinc-900 border border-border">
+        <Card className="bg-white dark:bg-[#0a0f1a] border border-border">
           <CardHeader>
             <CardTitle className="text-foreground dark:text-white">Export Preview</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="p-4 bg-slate-50 dark:bg-zinc-800 rounded-lg border-2 border-dashed border-slate-300 dark:border-zinc-600">
+              <div className="p-4 bg-white dark:bg-[#0a0f1a] rounded-lg border-2 border-dashed border-slate-300 dark:border-zinc-600">
                 <p className="text-center text-slate-600 dark:text-slate-400">
                   Your {charts.length} chart{charts.length !== 1 ? 's' : ''} will be exported with the current layout and styling
                 </p>
@@ -546,7 +546,7 @@ export function ExportActions({ charts, data, project }) {
       )}
 
       {charts.length === 0 && (
-        <Card className="border-dashed border-2 bg-card dark:bg-zinc-900 border-border">
+        <Card className="border-dashed border-2 bg-white dark:bg-[#0a0f1a] border-border">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Download className="w-16 h-16 text-slate-400 dark:text-slate-500 mb-4" />
             <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">No charts to export</h3>

@@ -34,6 +34,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  passwordChangeToken: {
+    type: String,
+    default: null,
+  },
+  passwordChangeTokenExpires: {
+    type: Date,
+    default: null,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema); 
