@@ -9,7 +9,7 @@ export default function MainLayout({ children }) {
   
   const handleLogout = () => {
     localStorage.removeItem('token');
-    window.location.href = '/auth';
+    navigate('/auth');
   };
 
   // Determine current page for sidebar highlighting
