@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart3, TrendingUp, PieChart, Activity } from "lucide-react"
+import datavizLogo from '/dataviz-logo.png'
 
 export function Logo({ variant = "default", size = "md" }) {
   const sizeClasses = {
@@ -12,39 +12,11 @@ export function Logo({ variant = "default", size = "md" }) {
 
   const iconSize = sizeClasses[size]
 
-  const variants = {
-    default: {
-      icon: BarChart3,
-      bg: "bg-foreground",
-      text: "text-background",
-    },
-    minimal: {
-      icon: TrendingUp,
-      bg: "bg-primary",
-      text: "text-primary-foreground",
-    },
-    chart: {
-      icon: PieChart,
-      bg: "bg-blue-600",
-      text: "text-white",
-    },
-    analytics: {
-      icon: Activity,
-      bg: "bg-green-600",
-      text: "text-white",
-    },
-  }
-
-  const config = variants[variant]
-  const IconComponent = config.icon
-
   return (
     <div
-      className={`flex aspect-square items-center justify-center rounded-lg ${config.bg} ${config.text} ${iconSize}`}
+      className={`flex aspect-square items-center justify-center rounded-lg bg-white ${iconSize}`}
     >
-      <IconComponent
-        className={`${size === "sm" ? "h-3 w-3" : size === "md" ? "h-4 w-4" : size === "lg" ? "h-6 w-6" : "h-8 w-8"}`}
-      />
+      <img src={datavizLogo} alt="DataViz Logo" className="object-contain w-3/4 h-3/4" />
     </div>
   )
 }
