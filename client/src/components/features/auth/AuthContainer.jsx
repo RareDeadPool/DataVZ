@@ -179,8 +179,8 @@ export default function AuthContainer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <img src={datavizLogo} alt="DataViz Logo" className="w-10 h-10 rounded-xl object-contain bg-primary" />
-              <span className="text-xl font-bold text-foreground">DataViz Professional</span>
+              <img src={datavizLogo} alt="DataViz Logo" className="w-10 h-10 rounded-xl object-contain" />
+              <span className="text-xl font-bold text-foreground">DataViz</span>
             </div>
             <ThemeToggle />
           </div>

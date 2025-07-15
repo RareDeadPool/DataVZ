@@ -135,8 +135,8 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <img src={datavizLogo} alt="DataViz Logo" className="w-8 h-8 rounded-lg object-contain bg-primary" />
-              <span className="text-xl font-bold text-foreground">DataViz Professional</span>
+              <img src={datavizLogo} alt="DataViz Logo" className="w-8 h-8 rounded-lg object-contain" />
+              <span className="text-xl font-bold text-foreground">DataViz</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
