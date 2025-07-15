@@ -119,8 +119,8 @@ export async function askGeminiSummary({ prompt, data }) {
   return res.data;
 }
 
-export async function shareProject(projectId) {
-  const res = await api.post(`/projects/${projectId}/share`);
+export async function shareProject(projectId, email) {
+  const res = await api.post(`/projects/${projectId}/share`, { email });
   return res.data;
 }
 
