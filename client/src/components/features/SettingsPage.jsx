@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,21 +12,55 @@ import {
   CheckCircle2,
   ExternalLink
 } from "lucide-react";
+import { updateProfile } from "@/services/api";
+import api from "@/services/api";
+import { useTheme } from "@/components/common/theme-provider";
+import { Switch } from "@/components/ui/switch";
 
 export default function SettingsPage() {
-  // Mock user data since we don't have redux setup
-  const user = { name: "User", email: "user@email.com" };
-  const [form, setForm] = useState({ name: user.name, email: user.email, password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    // Fetch current user profile
+    async function fetchProfile() {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await api.get("/auth/profile");
+        setForm({ name: res.data.name || "", email: res.data.email || "", password: "" });
+      } catch (err) {
+        setError("Failed to load profile");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setSaved(false);
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaved(true);
+    setLoading(true);
+    setError("");
+    try {
+      const payload = { name: form.name, email: form.email };
+      if (form.password) payload.password = form.password;
+      await updateProfile(payload);
+      setSaved(true);
+      setForm(f => ({ ...f, password: "" }));
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,6 +101,7 @@ export default function SettingsPage() {
                       onChange={handleChange}
                       required
                       className="w-full"
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
@@ -81,15 +116,32 @@ export default function SettingsPage() {
                       onChange={handleChange}
                       required
                       className="w-full"
+                      disabled={loading}
                     />
                   </div>
                 </div>
-                
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="password" className="text-sm font-medium">
+                    New Password
+                  </Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    className="w-full"
+                    disabled={loading}
+                  />
+                </div>
+                {error && (
+                  <div className="text-sm text-red-600">{error}</div>
+                )}
                 <div className="flex items-center justify-between pt-4">
-                  <Button type="submit" className="flex items-center gap-2">
-                    Save Changes
+                  <Button type="submit" className="flex items-center gap-2" disabled={loading}>
+                    {loading ? "Saving..." : "Save Changes"}
                   </Button>
-                  {saved && (
+                  {saved && !error && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-primary" />
                       Changes saved successfully
@@ -147,27 +199,9 @@ export default function SettingsPage() {
                   <Label className="text-sm font-medium mb-3 block">
                     Theme Preference
                   </Label>
-                  <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm">Light</span>
-                      <div className="relative">
-                        <input 
-                          type="checkbox" 
-                          disabled 
-                          className="sr-only"
-                        />
-                        <div className="w-10 h-6 bg-muted rounded-full border relative">
-                          <div className="w-4 h-4 bg-muted-foreground rounded-full absolute top-1 left-1 transition-transform"></div>
-                        </div>
-                      </div>
-                      <span className="text-sm">Dark</span>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      Coming Soon
-                    </Badge>
-                  </div>
+                  <ThemeSwitch />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Dark mode and theme customization will be available in a future update
+                    Choose your preferred theme mode.
                   </p>
                 </div>
               </div>
@@ -175,6 +209,19 @@ export default function SettingsPage() {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ThemeSwitch() {
+  const { setTheme, theme } = useTheme();
+  const isDark = theme === "dark";
+  const handleChange = () => setTheme(isDark ? "light" : "dark");
+  return (
+    <div className="flex items-center gap-2 p-4 border rounded-lg bg-muted/30 w-fit">
+      <span className="text-sm">Light</span>
+      <Switch checked={isDark} onCheckedChange={handleChange} aria-label="Toggle theme" />
+      <span className="text-sm">Dark</span>
     </div>
   );
 }

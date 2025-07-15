@@ -127,4 +127,9 @@ export async function shareProject(projectId) {
 export async function acceptSharedProject(token) {
   const res = await api.post('/projects/accept-shared', { token });
   return res.data;
+}
+
+export async function updateProfile(profileData) {
+  const res = await api.put('/auth/profile', profileData);
+  return res.data;
 } 
