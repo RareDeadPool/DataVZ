@@ -23,6 +23,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import datavizLogo from '/dataviz-logo.png'
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" className="mr-3">
@@ -178,10 +179,8 @@ export default function AuthContainer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center hover-glow">
-                <BarChart3 className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold gradient-text">DataViz Professional</span>
+              <img src={datavizLogo} alt="DataViz Logo" className="w-10 h-10 rounded-xl object-contain bg-primary" />
+              <span className="text-xl font-bold text-foreground">DataViz Professional</span>
             </div>
             <ThemeToggle />
           </div>
