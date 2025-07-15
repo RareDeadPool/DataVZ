@@ -47,6 +47,8 @@ export default function AuthContainer() {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
+  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+
   // Handle Google OAuth token from URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -139,7 +141,7 @@ export default function AuthContainer() {
 
   const handleGoogleSignIn = () => {
     // Redirect to Google OAuth endpoint
-    const googleAuthUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/google`;
+    const googleAuthUrl = `${API_BASE.replace(/\/api$/, '')}/api/auth/google`;
     window.location.href = googleAuthUrl;
   };
 
