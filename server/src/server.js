@@ -96,8 +96,9 @@ app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile',
 app.get('/api/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
   // Issue JWT and redirect to frontend with token
   const token = jwt.sign({ userId: req.user._id, role: req.user.role, email: req.user.email }, JWT_SECRET, { expiresIn: '7d' });
-  // Redirect to frontend with token as query param
-  res.redirect(`http://localhost:5173/auth?token=${token}`);
+  // Use FRONTEND_URL env variable for redirect
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  res.redirect(`${frontendUrl}/auth?token=${token}`);
 });
 
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
