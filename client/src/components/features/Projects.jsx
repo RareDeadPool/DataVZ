@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSelector, useDispatch } from "react-redux";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Badge } from './ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { 
   Plus, 
   Search, 
@@ -22,13 +25,25 @@ import {
   Calendar,
   User
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Alert, AlertDescription } from './ui/alert';
 import { Link, useNavigate } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchProjects, createProject, updateProject, deleteProject, setSelectedProject } from '@/store/slices/projectsSlice';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './ui/tooltip';
+
+// Redux actions
+import {
+  fetchProjects,
+  createProject,
+  updateProject,
+  deleteProject,
+  setSelectedProject,
+  clearCreateError,
+  clearUpdateError,
+  clearDeleteError,
+} from '../store/slices/projectsSlice';
+
+import { shareProject } from '../services/api';
+import { askGeminiSummary } from '../services/api';
 
 const templates = [
   {
@@ -61,7 +76,7 @@ export default function ProjectsPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const {
-    projects = [],
+    projects,
     selectedProject,
     loading,
     error,
@@ -71,7 +86,7 @@ export default function ProjectsPage() {
     updateError,
     deleteLoading,
     deleteError,
-  } = useSelector(state => state.projects || {});
+  } = useSelector(state => state.projects);
   
   const user = useSelector(state => state.auth.user);
 
@@ -86,7 +101,6 @@ export default function ProjectsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [projectForm, setProjectForm] = useState({ name: '', description: '', category: '' });
   const [editProjectForm, setEditProjectForm] = useState({ name: '', description: '', category: '' });
-  const [localSelectedProject, setLocalSelectedProject] = useState(null);
   const [localError, setLocalError] = useState(null);
 
   // AI Summary state
@@ -110,45 +124,69 @@ export default function ProjectsPage() {
     return matchesSearch;
   });
 
+  // Initialize data
+  useEffect(() => {
+    dispatch(fetchProjects()).then(fetchResult => {
+      console.log('Initial fetch projects:', fetchResult);
+    });
+  }, [dispatch]);
+
+  // Auto-select first project if none selected
+  useEffect(() => {
+    if (projects.length > 0 && !selectedProject) {
+      dispatch(setSelectedProject(projects[0]));
+    }
+  }, [projects, selectedProject, dispatch]);
+
+  // Handlers
   const handleSelectProject = (project) => {
-    setLocalSelectedProject(project);
+    dispatch(setSelectedProject(project));
   };
 
   const handleCreateProject = async () => {
+    setLocalError(null);
     if (!projectForm.name.trim()) {
       setLocalError('Project name is required.');
       return;
     }
     
-    // Simulate creating project
-    const newProject = {
-      _id: Date.now().toString(),
-      ...projectForm,
-      createdAt: new Date().toISOString(),
-      charts: [],
-      owner: user.id
-    };
+    const result = await dispatch(createProject(projectForm));
     
-    setProjectForm({ name: '', description: '', category: '' });
-    setShowCreateModal(false);
-    setLocalSelectedProject(newProject);
+    if (result.meta.requestStatus === 'fulfilled') {
+      setProjectForm({ name: '', description: '', category: '' });
+      setShowCreateModal(false);
+      const fetchResult = await dispatch(fetchProjects());
+      if (fetchResult.payload && Array.isArray(fetchResult.payload)) {
+        const newProject = fetchResult.payload.find(p => p.name === result.payload.name && p.owner === result.payload.owner);
+        if (newProject) {
+          dispatch(setSelectedProject(newProject));
+        } else if (fetchResult.payload.length > 0) {
+          dispatch(setSelectedProject(fetchResult.payload[0]));
+        }
+      }
+    } else {
+      setLocalError(result.payload || 'Failed to create project.');
+    }
   };
 
   const handleUpdateProject = async () => {
-    if (!editProjectForm.name.trim() || !localSelectedProject) return;
-    
-    // Simulate updating project
-    const updatedProject = { ...localSelectedProject, ...editProjectForm };
-    setLocalSelectedProject(updatedProject);
-    setShowEditModal(false);
+    if (!editProjectForm.name.trim() || !selectedProject) return;
+    await dispatch(updateProject({ 
+      projectId: selectedProject._id, 
+      updates: editProjectForm 
+    }));
+    if (!updateError) {
+      setShowEditModal(false);
+      dispatch(fetchProjects());
+    }
   };
 
   const handleDeleteProject = async () => {
-    if (!localSelectedProject) return;
-    
-    // Simulate deleting project
-    setLocalSelectedProject(null);
-    setShowDeleteModal(false);
+    if (!selectedProject) return;
+    await dispatch(deleteProject(selectedProject._id));
+    if (!deleteError) {
+      setShowDeleteModal(false);
+    }
   };
 
   const handleShowAISummary = async () => {
@@ -157,14 +195,14 @@ export default function ProjectsPage() {
     
     // Simulate AI summary generation
     setTimeout(() => {
-      setAISummary(`## Project Analysis: ${localSelectedProject?.name}
+      setAISummary(`## Project Analysis: ${selectedProject?.name}
 
-**Overview:** This project contains ${localSelectedProject?.charts?.length || 0} charts focused on ${localSelectedProject?.category || 'general'} analytics.
+**Overview:** This project contains ${selectedProject?.charts?.length || 0} charts focused on ${selectedProject?.category || 'general'} analytics.
 
 **Key Insights:**
-- Primary focus: ${localSelectedProject?.description || 'Data visualization'}
-- Category: ${localSelectedProject?.category || 'Uncategorized'}
-- Charts available: ${localSelectedProject?.charts?.length || 0}
+- Primary focus: ${selectedProject?.description || 'Data visualization'}
+- Category: ${selectedProject?.category || 'Uncategorized'}
+- Charts available: ${selectedProject?.charts?.length || 0}
 
 **Recommendations:**
 - Consider adding more visualization types
@@ -177,13 +215,14 @@ export default function ProjectsPage() {
   };
 
   const handleSendProject = async () => {
-    if (!localSelectedProject || !recipientEmail) return;
+    if (!selectedProject || !recipientEmail) return;
     setShareLoading(true);
     setShareError('');
+    setShareLink('');
     
     // Simulate share link generation
     setTimeout(() => {
-      setShareLink(`${window.location.origin}/projects/shared/${localSelectedProject._id}?token=abc123`);
+      setShareLink(`${window.location.origin}/projects/shared/${selectedProject._id}?token=abc123`);
       setShareLoading(false);
     }, 1000);
   };
@@ -236,7 +275,7 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-blue-950 dark:via-background dark:to-blue-950">
       <div className="container mx-auto px-4 py-8">
         {/* Floating AI Summary Button */}
-        {localSelectedProject && localSelectedProject.charts && localSelectedProject.charts.length > 0 && (
+        {selectedProject && selectedProject.charts && selectedProject.charts.length > 0 && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -329,7 +368,7 @@ export default function ProjectsPage() {
                   <Card
                     key={project._id}
                     className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                      localSelectedProject && localSelectedProject._id === project._id
+                      selectedProject && selectedProject._id === project._id
                         ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950/50'
                         : 'hover:bg-blue-50 dark:hover:bg-blue-950/30'
                     }`}
@@ -364,7 +403,7 @@ export default function ProjectsPage() {
 
           {/* Project Details */}
           <div className="xl:col-span-3">
-            {localSelectedProject ? (
+            {selectedProject ? (
               <div className="space-y-6">
                 {/* Project Header */}
                 <Card className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-xl">
@@ -376,14 +415,14 @@ export default function ProjectsPage() {
                             <FileSpreadsheet className="h-8 w-8 text-white" />
                           </div>
                           <div>
-                            <h2 className="text-3xl font-bold">{localSelectedProject.name}</h2>
-                            <p className="text-blue-100 text-lg">{localSelectedProject.description || 'No description'}</p>
+                            <h2 className="text-3xl font-bold">{selectedProject.name}</h2>
+                            <p className="text-blue-100 text-lg">{selectedProject.description || 'No description'}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-4 text-sm">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            Created {new Date(localSelectedProject.createdAt).toLocaleDateString()}
+                            Created {new Date(selectedProject.createdAt).toLocaleDateString()}
                           </div>
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4" />
@@ -394,7 +433,7 @@ export default function ProjectsPage() {
                       <div className="flex flex-col sm:flex-row gap-3">
                         <Button
                           variant="secondary"
-                          onClick={() => navigate(`/workspace/${localSelectedProject._id}`)}
+                          onClick={() => navigate(`/workspace/${selectedProject._id}`)}
                           className="flex items-center gap-2 bg-white text-blue-700 hover:bg-blue-50"
                         >
                           <BarChart3 className="h-4 w-4" />
@@ -427,7 +466,7 @@ export default function ProjectsPage() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Total Charts</p>
-                          <p className="text-3xl font-bold text-blue-600">{localSelectedProject.charts?.length || 0}</p>
+                          <p className="text-3xl font-bold text-blue-600">{selectedProject.charts?.length || 0}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -441,7 +480,7 @@ export default function ProjectsPage() {
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
                           <p className="text-lg font-semibold text-blue-600">
-                            {new Date(localSelectedProject.createdAt).toLocaleDateString()}
+                            {new Date(selectedProject.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -455,7 +494,7 @@ export default function ProjectsPage() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Category</p>
-                          <p className="text-lg font-semibold text-blue-600">{localSelectedProject.category || 'General'}</p>
+                          <p className="text-lg font-semibold text-blue-600">{selectedProject.category || 'General'}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -480,9 +519,9 @@ export default function ProjectsPage() {
                           variant="outline"
                           onClick={() => {
                             setEditProjectForm({
-                              name: localSelectedProject.name,
-                              description: localSelectedProject.description || '',
-                              category: localSelectedProject.category || ''
+                              name: selectedProject.name,
+                              description: selectedProject.description || '',
+                              category: selectedProject.category || ''
                             });
                             setShowEditModal(true);
                           }}
@@ -550,14 +589,175 @@ export default function ProjectsPage() {
                 </div>
               ) : (
                 <div className="prose max-w-none">
-                  <ReactMarkdown>{aiSummary}</ReactMarkdown>
+                  <div className="whitespace-pre-wrap">{aiSummary}</div>
                 </div>
               )}
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* ... keep existing code for all other dialogs (Create, Edit, Delete, Send) ... */}
+        {/* Create Project Dialog */}
+        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Project</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="Project name"
+                value={projectForm.name}
+                onChange={e => setProjectForm({ ...projectForm, name: e.target.value })}
+                disabled={createLoading}
+              />
+              <Input
+                placeholder="Description (optional)"
+                value={projectForm.description}
+                onChange={e => setProjectForm({ ...projectForm, description: e.target.value })}
+                disabled={createLoading}
+              />
+              <Input
+                placeholder="Category (optional)"
+                value={projectForm.category}
+                onChange={e => setProjectForm({ ...projectForm, category: e.target.value })}
+                disabled={createLoading}
+              />
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleCreateProject} 
+                  disabled={createLoading || !projectForm.name.trim()}
+                  className="flex-1"
+                >
+                  {createLoading ? 'Creating...' : 'Create Project'}
+                </Button>
+                <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+                  Cancel
+                </Button>
+              </div>
+              {(localError || createError) && (
+                <Alert variant="destructive">
+                  <AlertDescription>{localError || createError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Project Dialog */}
+        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Project</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="Project name"
+                value={editProjectForm.name}
+                onChange={e => setEditProjectForm({ ...editProjectForm, name: e.target.value })}
+              />
+              <Input
+                placeholder="Description (optional)"
+                value={editProjectForm.description}
+                onChange={e => setEditProjectForm({ ...editProjectForm, description: e.target.value })}
+              />
+              <Input
+                placeholder="Category (optional)"
+                value={editProjectForm.category}
+                onChange={e => setEditProjectForm({ ...editProjectForm, category: e.target.value })}
+              />
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleUpdateProject} 
+                  disabled={updateLoading || !editProjectForm.name.trim()}
+                  className="flex-1"
+                >
+                  {updateLoading ? 'Saving...' : 'Save Changes'}
+                </Button>
+                <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </Button>
+              </div>
+              {updateError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{updateError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Project Dialog */}
+        <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Project</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p>Are you sure you want to delete this project? This action cannot be undone.</p>
+              <div className="flex gap-2">
+                <Button 
+                  variant="destructive" 
+                  onClick={handleDeleteProject} 
+                  disabled={deleteLoading}
+                  className="flex-1"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete Project'}
+                </Button>
+                <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
+                  Cancel
+                </Button>
+              </div>
+              {deleteError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{deleteError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Send Project Dialog */}
+        <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Send Project</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                type="email"
+                placeholder="Recipient's email address"
+                value={recipientEmail}
+                onChange={e => setRecipientEmail(e.target.value)}
+                required
+                disabled={shareLoading}
+              />
+              <Button
+                onClick={handleSendProject}
+                disabled={shareLoading || !selectedProject || !recipientEmail}
+                className="w-full"
+              >
+                {shareLoading ? 'Generating...' : 'Generate Share Link'}
+              </Button>
+              {shareError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{shareError}</AlertDescription>
+                </Alert>
+              )}
+              {shareLink && (
+                <div className="flex flex-col gap-2">
+                  <div className="text-sm font-medium">Share this link:</div>
+                  <div className="flex items-center gap-2">
+                    <Input value={shareLink} readOnly className="flex-1" />
+                    <Button variant="outline" size="icon" onClick={handleCopyLink}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    {copied && <span className="text-xs text-green-600">Copied!</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground">The recipient must log in and accept the project. It will be added as their own copy.</div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
