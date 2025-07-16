@@ -166,6 +166,7 @@ export default function Dashboard() {
                 {successMsg && <div className="text-green-600 text-sm">{successMsg}</div>}
               </form>
             </DialogContent>
+          </Dialog>
         )}
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
