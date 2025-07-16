@@ -173,10 +173,10 @@ export default function AuthContainer() {
   ];
 
   return (
-    <div className="min-h-screen bg-background theme-transition">
+    <div className="min-h-screen bg-background theme-transition p-2 sm:p-0">
       {/* Navigation */}
       <nav className="border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <img src={datavizLogo} alt="DataViz Logo" className="w-10 h-10 rounded-xl object-contain" />
@@ -187,7 +187,7 @@ export default function AuthContainer() {
         </div>
       </nav>
 
-      <div className="flex min-h-[calc(100vh-4rem)]">
+      <div className="flex flex-col lg:flex-row min-h-[calc(100vh-4rem)]">
         {/* Left Side - Benefits */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-50/50 to-blue-100/30 dark:from-blue-950/20 dark:to-blue-900/10 items-center justify-center p-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-grid-blue-500/10"></div>

@@ -326,7 +326,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full p-6">
+    <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-6 space-y-6">
       {/* Floating AI Summary Button */}
       {selectedProject && selectedProject.charts && selectedProject.charts.length > 0 && (
         <TooltipProvider>
@@ -377,15 +377,39 @@ export default function ProjectsPage() {
           </div>
         </DialogContent>
       </Dialog>
-      <div className="flex items-center justify-between mb-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground">Manage your data visualization projects and dashboards</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Project
-        </Button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground dark:text-white">Projects</h1>
+        <Button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto">New Project</Button>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-4">
+        <Input
+          placeholder="Search projects..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="w-full sm:w-64"
+        />
+        {/* Add more filters here if needed */}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredProjects.map((project, idx) => (
+          <Card key={project._id || idx} className="flex flex-col h-full p-2 sm:p-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-semibold break-words">{project.name}</CardTitle>
+              <CardDescription className="text-xs text-muted-foreground break-words">{project.description}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col justify-between">
+              <div className="flex flex-wrap gap-2 mb-2">
+                <Badge variant="outline">{project.category}</Badge>
+                {/* Add more badges/info as needed */}
+              </div>
+              <div className="flex flex-col xs:flex-row gap-2 mt-2 w-full">
+                <Button size="sm" className="w-full xs:w-auto" onClick={() => handleSelectProject(project)}>Open</Button>
+                {canEditProject && <Button size="sm" variant="outline" className="w-full xs:w-auto" onClick={() => { setEditProjectForm(project); setShowEditModal(true); }}>Edit</Button>}
+                {canDeleteProject && <Button size="sm" variant="destructive" className="w-full xs:w-auto" onClick={() => { setShowDeleteModal(true); dispatch(setSelectedProject(project)); }}>Delete</Button>}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
       {error && (
         <Alert variant="destructive">

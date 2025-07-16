@@ -62,21 +62,21 @@ export function DataTable({ data }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h3 className="text-lg font-semibold">Data Preview</h3>
           <p className="text-sm text-slate-600">
             Showing {filteredData.length} rows and {totalColumns} columns
           </p>
         </div>
-        <div className="flex space-x-2 items-center">
+        <div className="flex flex-col xs:flex-row gap-2 items-stretch xs:items-center">
           <Badge variant="outline">{filteredData.length} rows</Badge>
           <Badge variant="outline">{totalColumns} columns</Badge>
           <Input
             placeholder="Search..."
             value={filterText}
             onChange={e => { setFilterText(e.target.value); setPage(1); }}
-            className="w-40 text-sm"
+            className="w-full xs:w-40 text-sm"
           />
         </div>
       </div>
@@ -118,15 +118,15 @@ export function DataTable({ data }) {
           </Table>
         </ScrollArea>
         {/* Pagination Controls */}
-        <div className="flex justify-between items-center p-2 border-t bg-slate-50">
+        <div className="flex flex-col xs:flex-row justify-between items-stretch xs:items-center p-2 border-t bg-slate-50 gap-2">
           <span className="text-xs text-slate-500">
             Page {page} of {totalPages}
           </span>
-          <div className="space-x-2">
-            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+          <div className="flex gap-2 w-full xs:w-auto">
+            <Button variant="outline" size="sm" className="w-full xs:w-auto" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
               Prev
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+            <Button variant="outline" size="sm" className="w-full xs:w-auto" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
               Next
             </Button>
           </div>

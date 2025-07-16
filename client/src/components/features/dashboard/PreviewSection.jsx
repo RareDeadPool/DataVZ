@@ -5,7 +5,7 @@ import { FileSpreadsheet } from "lucide-react"
 
 export function PreviewSection() {
   return (
-    <Card className="mt-6 bg-white dark:bg-[#0a0f1a] text-foreground dark:text-white">
+    <Card className="mt-4 sm:mt-6 bg-white dark:bg-[#0a0f1a] text-foreground dark:text-white px-2 sm:px-4">
       <CardHeader>
         <div className="flex items-center gap-2">
           <FileSpreadsheet className="h-5 w-5" />

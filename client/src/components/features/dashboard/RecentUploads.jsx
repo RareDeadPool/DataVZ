@@ -69,7 +69,7 @@ export function RecentUploads() {
   }
 
   return (
-    <Card className="bg-white dark:bg-[#0a0f1a] text-foreground dark:text-white">
+    <Card className="bg-white dark:bg-[#0a0f1a] text-foreground dark:text-white px-2 sm:px-4">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -89,13 +89,13 @@ export function RecentUploads() {
         ) : (
           <div className="space-y-4">
             {uploads && uploads.map((upload) => (
-              <div key={upload?._id || Math.random()} className="flex items-start gap-3 p-3 bg-white/80 dark:bg-[#0a0f1a]/80 rounded-lg">
-                <div className="p-2 bg-white dark:bg-[#0a0f1a] rounded">
+              <div key={upload?._id || Math.random()} className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3 p-2 sm:p-3 bg-white/80 dark:bg-[#0a0f1a]/80 rounded-lg">
+                <div className="p-2 bg-white dark:bg-[#0a0f1a] rounded mb-2 sm:mb-0">
                   <FileSpreadsheet className="h-4 w-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm">{upload?.filename || 'Unknown file'}</p>
-                  <div className="flex items-center gap-2 mt-1">
+                  <p className="font-medium text-sm break-all">{upload?.filename || 'Unknown file'}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
                     <Badge variant="outline" className="text-xs">
                       {upload?.uploadDate ? timeAgo(upload.uploadDate) : 'Unknown time'}
                     </Badge>
@@ -103,12 +103,12 @@ export function RecentUploads() {
                       # {upload?.data && Array.isArray(upload.data) ? upload.data.length : 0} rows
                     </Badge>
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => handlePreview(upload?._id)}>
+                  <div className="flex flex-col xs:flex-row gap-2 mt-2 w-full">
+                    <Button variant="ghost" size="sm" className="h-8 px-2 w-full xs:w-auto" onClick={() => handlePreview(upload?._id)}>
                       <Eye className="mr-1 h-3 w-3" />
                       Preview
                     </Button>
-                    <Button variant="destructive" size="sm" className="h-8 px-2" onClick={() => handleDelete(upload?._id)}>
+                    <Button variant="destructive" size="sm" className="h-8 px-2 w-full xs:w-auto" onClick={() => handleDelete(upload?._id)}>
                       Delete
                     </Button>
                   </div>
@@ -119,7 +119,7 @@ export function RecentUploads() {
         )}
       </CardContent>
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-2xl bg-white dark:bg-[#0a0f1a] text-foreground dark:text-white">
+        <DialogContent className="max-w-2xl w-[98vw] bg-white dark:bg-[#0a0f1a] text-foreground dark:text-white">
           <DialogHeader>
             <DialogTitle>Data Preview</DialogTitle>
           </DialogHeader>

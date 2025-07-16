@@ -74,12 +74,15 @@ export function AppSidebar({
   onNavigate, 
   onQuickCreate,
   className,
+  mobileOpen,
+  onCloseMobile,
   ...props 
 }) {
   const user = useSelector((state) => state.auth.user);
 
   const handleNavClick = (page) => {
     onNavigate(page);
+    if (onCloseMobile) onCloseMobile(); // Close sidebar on mobile nav
   };
 
   const getAvatarUrl = (avatar) => {
@@ -102,6 +105,7 @@ export function AppSidebar({
         "group-data-[collapsible=icon]:bg-white/80 group-data-[collapsible=icon]:dark:bg-zinc-800 group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:border-r group-data-[collapsible=icon]:border-zinc-200 group-data-[collapsible=icon]:p-0",
         className)} 
       {...props}
+      style={mobileOpen ? { boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)' } : {}}
     >
       <SidebarHeader className={cn(
         "border-b border-sidebar-border bg-white dark:bg-neutral-900 theme-transition p-4",

@@ -2,6 +2,7 @@ import { AppSidebar } from './app-sidebar';
 import { SiteHeader } from './site-header';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 
 export default function MainLayout({ children }) {
   const navigate = useNavigate();
@@ -85,23 +86,30 @@ export default function MainLayout({ children }) {
     navigate('/projects?create=true');
   };
 
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-screen w-full overflow-hidden bg-background theme-transition">
+      <div className="flex h-screen w-full overflow-hidden bg-background theme-transition flex-col md:flex-row">
+        {/* Mobile sidebar overlay */}
+        <div className={`fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden ${mobileSidebarOpen ? 'block' : 'hidden'}`} onClick={() => setMobileSidebarOpen(false)} />
         <AppSidebar
           onLogout={handleLogout}
           currentPage={currentPage}
           onNavigate={handleNavigate}
           onQuickCreate={handleQuickCreate}
-          className="animate-fade-in"
+          className={`animate-fade-in ${mobileSidebarOpen ? 'fixed z-50 left-0 top-0 h-full w-64 bg-background shadow-lg md:static md:block' : 'hidden md:block'}`}
+          mobileOpen={mobileSidebarOpen}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
         />
         <div className="flex-1 flex flex-col min-w-0 theme-transition">
           <SiteHeader 
             title={pageTitle}
             onQuickCreate={handleQuickCreate}
+            onOpenMobileSidebar={() => setMobileSidebarOpen(true)}
             className="animate-slide-in-right"
           />
-          <main className="flex-1 w-full min-w-0 overflow-auto bg-background">
+          <main className="flex-1 w-full min-w-0 overflow-auto bg-background p-2 sm:p-4">
             <div className="animate-fade-in">
               {children}
             </div>

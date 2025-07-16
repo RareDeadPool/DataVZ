@@ -88,14 +88,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex-1 p-6 bg-background min-h-screen">
+    <div className="flex-1 p-2 sm:p-4 md:p-6 bg-background min-h-screen">
       {/* Floating AI Summary Button */}
       {uploadedFiles && uploadedFiles.length > 0 && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                className="fixed bottom-6 right-6 z-50 shadow-lg rounded-full h-14 w-14 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white animate-pulse focus:animate-bounce transition-all duration-300"
+                className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 shadow-lg rounded-full h-12 w-12 sm:h-14 sm:w-14 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white animate-pulse focus:animate-bounce transition-all duration-300"
                 onClick={handleShowAISummary}
                 size="icon"
                 style={{ fontSize: 24 }}
@@ -113,7 +113,7 @@ export default function Dashboard() {
         </TooltipProvider>
       )}
       <Dialog open={showAISummary} onOpenChange={setShowAISummary}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl shadow-2xl border-0">
+        <DialogContent className="max-w-lg w-[95vw] p-0 overflow-hidden rounded-2xl shadow-2xl border-0">
           <div className="bg-blue-50 dark:bg-blue-950 p-6 flex flex-col gap-4">
             <div className="flex items-center gap-3 mb-2">
               <BrainCircuit className="h-7 w-7 text-blue-600" />
@@ -140,16 +140,16 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground dark:text-white">Dashboard</h1>
-            <p className="text-muted-foreground">Manage your Excel uploads and data processing</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground dark:text-white">Dashboard</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Manage your Excel uploads and data processing</p>
           </div>
-          <Button onClick={() => setShowModal(true)} variant="default">New Project & Upload Data</Button>
+          <Button onClick={() => setShowModal(true)} variant="default" className="w-full sm:w-auto">New Project & Upload Data</Button>
         </div>
         {showModal && (
           <Dialog open={showModal} onOpenChange={setShowModal}>
-            <DialogContent>
+            <DialogContent className="w-[95vw] max-w-md">
               <DialogHeader>
                 <DialogTitle>New Project & Upload Data</DialogTitle>
               </DialogHeader>
@@ -158,17 +158,16 @@ export default function Dashboard() {
                 <Input name="description" placeholder="Description" value={projectForm.description} onChange={handleProjectFormChange} />
                 <Input name="category" placeholder="Category" value={projectForm.category} onChange={handleProjectFormChange} />
                 <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} required />
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={uploading}>{uploading ? 'Uploading...' : 'Create & Upload'}</Button>
-                  <Button type="button" variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button type="submit" disabled={uploading} className="w-full sm:w-auto">{uploading ? 'Uploading...' : 'Create & Upload'}</Button>
+                  <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="w-full sm:w-auto">Cancel</Button>
                 </div>
                 {errorMsg && <div className="text-red-500 text-sm">{errorMsg}</div>}
                 {successMsg && <div className="text-green-600 text-sm">{successMsg}</div>}
               </form>
             </DialogContent>
-          </Dialog>
         )}
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             <UploadSection />
             {previewData ? (
