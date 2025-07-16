@@ -45,30 +45,30 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-slate-100 dark:from-primary/10 dark:via-background dark:to-slate-900">
-      <div className="max-w-4xl mx-auto py-12 px-4">
+      <div className="max-w-4xl mx-auto py-8 px-2 sm:px-4">
         {/* Header Section */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 sm:mb-10">
           <div className="flex items-center justify-center mb-4">
             <div className="p-3 bg-primary/10 rounded-full">
               <Search className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-slate-600 dark:from-primary dark:to-slate-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-slate-600 dark:from-primary dark:to-slate-400 bg-clip-text text-transparent">
             Search Everything
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base sm:text-lg text-muted-foreground">
             Find projects and charts in seconds
           </p>
         </div>
 
         {/* Search Input */}
         <Card className="mb-8 shadow-lg border-0 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
                 type="text"
-                className="pl-12 pr-4 py-6 text-lg border-0 focus-visible:ring-2 focus-visible:ring-primary/20 bg-transparent"
+                className="pl-12 pr-4 py-4 sm:py-6 text-base sm:text-lg border-0 focus-visible:ring-2 focus-visible:ring-primary/20 bg-transparent"
                 placeholder="Search projects, charts, teams..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -86,7 +86,7 @@ export default function SearchPage() {
           <div className="space-y-6">
             {filtered.length === 0 ? (
               <Card className="shadow-lg border-0 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
-                <CardContent className="p-12 text-center">
+                <CardContent className="p-8 sm:p-12 text-center">
                   <div className="flex items-center justify-center mb-4">
                     <div className="p-4 bg-primary/10 rounded-full">
                       <Sparkles className="h-8 w-8 text-primary" />
@@ -100,23 +100,23 @@ export default function SearchPage() {
               </Card>
             ) : (
               <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-semibold">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2 sm:gap-0">
+                  <h2 className="text-lg sm:text-2xl font-semibold">
                     Search Results
-                    <span className="ml-2 text-lg text-muted-foreground">
+                    <span className="ml-2 text-base sm:text-lg text-muted-foreground">
                       ({filtered.length} {filtered.length === 1 ? 'result' : 'results'})
                     </span>
                   </h2>
                 </div>
                 
-                <div className="grid gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   {filtered.map((item, idx) => (
                     <Card 
                       key={idx} 
                       className="group hover:shadow-lg transition-all duration-200 cursor-pointer border-0 bg-white/80 dark:bg-background/80 backdrop-blur-sm hover:bg-primary/5 dark:hover:bg-primary/10"
                     >
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-4">
+                      <CardContent className="p-4 sm:p-6">
+                        <div className="flex flex-col xs:flex-row items-start xs:items-center gap-3 xs:gap-4">
                           <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg group-hover:bg-primary/20 transition-colors">
                             {getTypeIcon(item.type)}
                           </div>
@@ -130,7 +130,7 @@ export default function SearchPage() {
                                 {item.type}
                               </Badge>
                             </div>
-                            <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                            <h3 className="text-base sm:text-lg font-semibold group-hover:text-primary transition-colors">
                               {item.name}
                             </h3>
                           </div>
@@ -153,7 +153,7 @@ export default function SearchPage() {
         {/* Empty State */}
         {!query && (
           <Card className="shadow-lg border-0 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
-            <CardContent className="p-12 text-center">
+            <CardContent className="p-8 sm:p-12 text-center">
               <div className="flex items-center justify-center mb-6">
                 <div className="p-4 bg-primary/10 rounded-full">
                   <Search className="h-8 w-8 text-primary" />

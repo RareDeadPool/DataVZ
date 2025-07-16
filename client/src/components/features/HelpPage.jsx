@@ -74,18 +74,18 @@ export default function HelpPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-slate-100 dark:from-primary/10 dark:via-background dark:to-slate-900">
-      <div className="max-w-4xl mx-auto py-12 px-4 space-y-8">
+      <div className="max-w-4xl mx-auto py-8 px-2 sm:px-4 space-y-6 sm:space-y-8">
         {/* Header Section */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 sm:mb-10">
           <div className="flex items-center justify-center mb-4">
             <div className="p-3 bg-primary/10 rounded-full">
               <HelpCircle className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-slate-600 dark:from-primary dark:to-slate-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-slate-600 dark:from-primary dark:to-slate-400 bg-clip-text text-transparent">
             Help & Support
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base sm:text-lg text-muted-foreground">
             Find answers to common questions or get in touch with our support team
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function HelpPage() {
                 <CollapsibleTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-full justify-between p-4 h-auto text-left hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    className="w-full justify-between p-3 sm:p-4 h-auto text-left hover:bg-slate-50 dark:hover:bg-slate-700/50"
                   >
                     <span className="font-medium">{faq.question}</span>
                     {openFaqs[idx] ? (
@@ -151,7 +151,7 @@ export default function HelpPage() {
 
             {/* Contact Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Your Name</label>
                   <Input
@@ -195,7 +195,7 @@ export default function HelpPage() {
               <Button 
                 type="submit" 
                 disabled={loading} 
-                className="w-full md:w-auto flex items-center gap-2"
+                className="w-full sm:w-auto flex items-center gap-2"
               >
                 {loading ? (
                   <>

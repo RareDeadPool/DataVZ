@@ -65,19 +65,19 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-4xl mx-auto py-8 px-4">
+      <div className="container max-w-4xl mx-auto py-6 px-2 sm:px-4">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-6 sm:mb-8">
           <div className="p-2 bg-muted rounded-lg">
             <Settings className="h-6 w-6 text-foreground" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-            <p className="text-muted-foreground">Manage your account preferences and security</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">Manage your account preferences and security</p>
           </div>
         </div>
 
-        <div className="grid gap-6">
+        <div className="grid gap-4 sm:gap-6">
           {/* Profile Information */}
           <Card>
             <CardHeader>
@@ -86,9 +86,9 @@ export default function SettingsPage() {
                 Profile Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6">
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-sm font-medium">
                       Full Name
@@ -137,8 +137,8 @@ export default function SettingsPage() {
                 {error && (
                   <div className="text-sm text-red-600">{error}</div>
                 )}
-                <div className="flex items-center justify-between pt-4">
-                  <Button type="submit" className="flex items-center gap-2" disabled={loading}>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between pt-4 gap-2 sm:gap-0">
+                  <Button type="submit" className="flex items-center gap-2 w-full sm:w-auto" disabled={loading}>
                     {loading ? "Saving..." : "Save Changes"}
                   </Button>
                   {saved && !error && (
@@ -160,20 +160,20 @@ export default function SettingsPage() {
                 Security & Privacy
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6">
               <div className="space-y-4">
                 <div>
                   <Label className="text-sm font-medium mb-3 block">
                     Password Management
                   </Label>
-                  <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 border rounded-lg bg-muted/30 gap-2 sm:gap-0">
                     <div className="flex-1">
                       <p className="text-sm font-medium">Change Password</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         For your security, password changes require email verification
                       </p>
                     </div>
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="sm" asChild className="w-full sm:w-auto mt-2 sm:mt-0">
                       <a href="/request-password-reset" className="flex items-center gap-2">
                         Update Password
                         <ExternalLink className="h-3 w-3" />

@@ -132,13 +132,13 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
     <div className="min-h-screen bg-background theme-transition">
       {/* Navigation */}
       <nav className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50 theme-transition">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <img src={datavizLogo} alt="DataViz Logo" className="w-8 h-8 rounded-lg object-contain" />
               <span className="text-xl font-bold text-foreground">DataViz</span>
             </div>
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
               </a>
@@ -160,21 +160,21 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-20 px-2 sm:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <Badge variant="secondary" className="mb-6 font-medium">
             <Sparkles className="w-4 h-4 mr-2" />
             AI-Powered Data Visualization Platform
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-foreground mb-6 animate-fade-in">
             Transform Your Data Into
             <span className="text-primary"> Intelligent Insights</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto text-balance animate-fade-in" style={{animationDelay: '100ms'}}>
+          <p className="text-base sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto text-balance animate-fade-in" style={{animationDelay: '100ms'}}>
             Meet Vizard, your AI assistant that turns complex data into beautiful visualizations. 
             Collaborate seamlessly with your team in powerful project workspaces designed for modern data professionals.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{animationDelay: '200ms'}}>
+          <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 justify-center animate-fade-in" style={{animationDelay: '200ms'}}>
             <Button size="lg" className="btn-primary gap-2 h-12 px-8 font-semibold hover-lift" onClick={onGetStarted}>
               Start Free Trial
               <ArrowRight className="h-5 w-5" />
@@ -184,164 +184,92 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
             </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-4">
-            No credit card required • 14-day free trial • Cancel anytime
+            No credit card required 2 14-day free trial 2 Cancel anytime
           </p>
         </div>
       </section>
 
       {/* Vizard AI Section */}
-      <section id="vizard" className="py-20 px-4 sm:px-6 lg:px-8 bg-card">
+      <section id="vizard" className="py-12 sm:py-20 px-2 sm:px-4 lg:px-8 bg-card">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-16">
             <Badge variant="secondary" className="mb-4 font-medium">
               <BrainCircuit className="w-4 h-4 mr-2" />
               Meet Vizard
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Your Personal AI Data Analyst
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Your AI Data Assistant
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-              Ask questions in plain English and watch Vizard create stunning visualizations, 
-              discover hidden patterns, and provide actionable insights instantly.
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Ask questions in plain English and get instant answers, charts, and insights from your data.
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {vizardFeatures.map((feature, index) => (
-              <Card key={index} className="card-elevated hover-lift bg-background">
-                <CardHeader className="pb-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
-                    <feature.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">{feature.description}</CardDescription>
-                </CardContent>
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
+            {vizardFeatures.map((feature, idx) => (
+              <Card key={idx} className="flex flex-col items-center text-center p-4 sm:p-6 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
+                <div className="mb-4 p-3 rounded-full bg-primary/10 dark:bg-primary/20">
+                  <feature.icon className="h-7 w-7 text-primary" />
+                </div>
+                <CardTitle className="text-base sm:text-lg font-semibold mb-2">{feature.title}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">{feature.description}</CardDescription>
               </Card>
             ))}
-          </div>
-
-          <div className="bg-primary/5 rounded-2xl p-8 md:p-12 text-center">
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              Experience the Power of AI-Driven Analytics
-            </h3>
-            <p className="text-muted-foreground mb-6 text-lg">
-              "Show me customer satisfaction trends by region" → Instant interactive map with trend analysis
-            </p>
-            <Button className="btn-primary gap-2 hover-lift">
-              Try Vizard Now
-              <BrainCircuit className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Project Workspace Section */}
-      <section id="workspace" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4 font-medium">
-              <Users className="w-4 h-4 mr-2" />
-              Collaborative Workspace
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Where Teams Create Together
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-              Organize projects, collaborate in real-time, and maintain version control. 
-              Everything your team needs to turn data into decisions.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {workspaceFeatures.map((feature, index) => (
-              <Card key={index} className="card-elevated hover-lift">
-                <CardHeader className="pb-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
-                    <feature.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">{feature.description}</CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-              <h3 className="text-2xl font-bold text-foreground mb-4">
-                Built for Modern Teams
-              </h3>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-muted-foreground">Real-time collaboration with live cursors</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-muted-foreground">Comments and feedback directly on charts</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-muted-foreground">Role-based permissions and access control</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-muted-foreground">Shared templates and component libraries</span>
-                </li>
-              </ul>
-            </div>
-            <div className="bg-primary/5 rounded-2xl p-6 text-center">
-              <FileText className="w-16 h-16 text-primary mx-auto mb-4" />
-              <h4 className="text-lg font-semibold text-foreground mb-2">
-                Organize Everything
-              </h4>
-              <p className="text-muted-foreground">
-                Keep all your data projects, charts, and insights organized in collaborative workspaces
-              </p>
-            </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-card">
+      <section id="features" className="py-12 sm:py-20 px-2 sm:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Everything You Need for Data Excellence
+          <div className="text-center mb-10 sm:mb-16">
+            <Badge variant="secondary" className="mb-4 font-medium">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Platform Features
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Everything you need for data-driven success
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-              Powerful features designed to help you create, analyze, and share data insights effortlessly.
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Explore our suite of tools for analytics, collaboration, and security.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Card 
-                key={index} 
-                className={`card-elevated hover-lift transition-all duration-300 ${
-                  feature.highlight ? 'ring-2 ring-primary/20 bg-primary/5' : 'bg-background'
-                }`}
-              >
-                <CardHeader>
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
-                    feature.highlight ? 'bg-primary shadow-lg' : 'bg-primary/10'
-                  }`}>
-                    <feature.icon className={`w-6 h-6 ${
-                      feature.highlight ? 'text-primary-foreground' : 'text-primary'
-                    }`} />
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  {feature.highlight && (
-                    <Badge variant="default" className="w-fit">Featured</Badge>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">{feature.description}</CardDescription>
-                </CardContent>
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
+            {features.map((feature, idx) => (
+              <Card key={idx} className="flex flex-col items-center text-center p-4 sm:p-6 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
+                <div className="mb-4 p-3 rounded-full bg-primary/10 dark:bg-primary/20">
+                  <feature.icon className="h-7 w-7 text-primary" />
+                </div>
+                <CardTitle className="text-base sm:text-lg font-semibold mb-2">{feature.title}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">{feature.description}</CardDescription>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Workspace Section */}
+      <section id="workspace" className="py-12 sm:py-20 px-2 sm:px-4 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10 sm:mb-16">
+            <Badge variant="secondary" className="mb-4 font-medium">
+              <Users className="w-4 h-4 mr-2" />
+              Project Workspace
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Collaborate in Real Time
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Work together with your team on shared projects, dashboards, and reports.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
+            {workspaceFeatures.map((feature, idx) => (
+              <Card key={idx} className="flex flex-col items-center text-center p-4 sm:p-6 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
+                <div className="mb-4 p-3 rounded-full bg-primary/10 dark:bg-primary/20">
+                  <feature.icon className="h-7 w-7 text-primary" />
+                </div>
+                <CardTitle className="text-base sm:text-lg font-semibold mb-2">{feature.title}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">{feature.description}</CardDescription>
               </Card>
             ))}
           </div>
@@ -349,29 +277,31 @@ export default function LandingPage({ onGetStarted, onSignIn }) {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 px-4 sm:px-6 lg:px-8">
+      <section id="testimonials" className="py-12 sm:py-20 px-2 sm:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Loved by Data Professionals Worldwide
+          <div className="text-center mb-10 sm:mb-16">
+            <Badge variant="secondary" className="mb-4 font-medium">
+              <Star className="w-4 h-4 mr-2" />
+              What Our Users Say
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Trusted by Data Professionals
             </h2>
-            <p className="text-xl text-muted-foreground">See what our customers are saying about DataViz and Vizard</p>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+              See how Vizard is helping teams unlock the power of their data.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="card-elevated hover-lift">
-                <CardContent className="pt-6">
-                  <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground mb-4 text-base">"{testimonial.content}"</p>
-                  <div>
-                    <p className="font-semibold text-foreground">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                  </div>
-                </CardContent>
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
+            {testimonials.map((testimonial, idx) => (
+              <Card key={idx} className="flex flex-col items-center text-center p-4 sm:p-6 bg-white/80 dark:bg-background/80 backdrop-blur-sm">
+                <div className="mb-4 flex items-center gap-2">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 text-yellow-400" />
+                  ))}
+                </div>
+                <CardTitle className="text-base sm:text-lg font-semibold mb-2">{testimonial.name}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground mb-1">{testimonial.role}</CardDescription>
+                <p className="text-sm sm:text-base text-muted-foreground mb-2">"{testimonial.content}"</p>
               </Card>
             ))}
           </div>
