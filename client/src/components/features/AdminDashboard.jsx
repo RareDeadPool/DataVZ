@@ -162,7 +162,7 @@ export default function AdminDashboard() {
         <section>
           <div className="flex items-center gap-3 mb-8">
             <div className="p-2 bg-foreground/5 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-foreground" />
+              <TrendingUp className="h-5 w-5 text-blue-600" />
             </div>
             <h2 className="text-2xl font-semibold tracking-tight">Platform Analytics</h2>
           </div>
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
                         <p className="text-3xl font-bold tracking-tight">{analytics.userCount}</p>
                       </div>
                       <div className="p-4 bg-foreground/5 rounded-2xl">
-                        <Users className="h-8 w-8 text-foreground" />
+                        <Users className="h-8 w-8 text-blue-600" />
                       </div>
                     </div>
                   </CardContent>
@@ -211,7 +211,7 @@ export default function AdminDashboard() {
                         <p className="text-3xl font-bold tracking-tight">{analytics.projectCount}</p>
                       </div>
                       <div className="p-4 bg-foreground/5 rounded-2xl">
-                        <Database className="h-8 w-8 text-foreground" />
+                        <Database className="h-8 w-8 text-blue-600" />
                       </div>
                     </div>
                   </CardContent>
@@ -225,7 +225,7 @@ export default function AdminDashboard() {
                         <p className="text-3xl font-bold tracking-tight">{analytics.excelCount}</p>
                       </div>
                       <div className="p-4 bg-foreground/5 rounded-2xl">
-                        <FileText className="h-8 w-8 text-foreground" />
+                        <FileText className="h-8 w-8 text-blue-600" />
                       </div>
                     </div>
                   </CardContent>
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
                         <p className="text-3xl font-bold tracking-tight">{analytics.chartCount}</p>
                       </div>
                       <div className="p-4 bg-foreground/5 rounded-2xl">
-                        <BarChart3 className="h-8 w-8 text-foreground" />
+                        <BarChart3 className="h-8 w-8 text-blue-600" />
                       </div>
                     </div>
                   </CardContent>
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-3">
                       <div className="p-2 bg-foreground/5 rounded-lg">
-                        <Activity className="h-5 w-5 text-foreground" />
+                        <Activity className="h-5 w-5 text-blue-600" />
                       </div>
                       <span className="text-lg">Usage Trends</span>
                     </CardTitle>
@@ -294,7 +294,7 @@ export default function AdminDashboard() {
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-3">
                       <div className="p-2 bg-foreground/5 rounded-lg">
-                        <PieChart className="h-5 w-5 text-foreground" />
+                        <PieChart className="h-5 w-5 text-blue-600" />
                       </div>
                       <span className="text-lg">Chart Types</span>
                     </CardTitle>
