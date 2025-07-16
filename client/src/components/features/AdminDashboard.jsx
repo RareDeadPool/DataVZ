@@ -308,7 +308,7 @@ export default function AdminDashboard() {
                             <div key={type._id} className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-muted/30 to-muted/10 hover:from-muted/40 hover:to-muted/20 transition-all duration-200">
                               <div className="flex items-center gap-4">
                                 <div className="p-3 bg-background rounded-xl shadow-sm">
-                                  <Icon className="h-5 w-5 text-muted-foreground" />
+              <Icon className="h-5 w-5 text-muted-foreground" />
                                 </div>
                                 <span className="font-semibold capitalize text-lg">{type._id || 'Other'}</span>
                               </div>
@@ -573,6 +573,6 @@ export default function AdminDashboard() {
           </Card>
         </section>
       </div>
-    </div>
+      </div>
   )
 }
