@@ -24,5 +24,8 @@ router.post('/avatar', auth, upload.single('avatar'), authController.uploadAvata
 router.post('/request-password-change', authController.requestPasswordChange);
 router.put('/password', authController.changePassword);
 router.delete('/profile', auth, authController.deleteAccount);
+router.get('/users', auth, authController.getAllUsers); // admin only
+router.put('/users/role', auth, authController.updateUserRole); // admin only
+router.put('/users/status', auth, authController.updateUserStatus); // admin only
 
 module.exports = router; 

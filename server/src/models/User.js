@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user',
   },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'blocked'],
+    default: 'active',
+  },
   avatar: {
     type: String,
     default: '',

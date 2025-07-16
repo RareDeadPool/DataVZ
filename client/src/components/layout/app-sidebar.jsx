@@ -10,6 +10,7 @@ import {
   Zap,
   TrendingUp,
   LogOut,
+  Shield,
 } from "lucide-react"
 
 import {
@@ -54,6 +55,12 @@ const navigationItems = [
     badge: "AI",
   },
 ]
+
+const adminNavItem = {
+  title: "Admin Panel",
+  url: "admin",
+  icon: Shield,
+};
 
 const toolItems = [
   {
@@ -181,6 +188,27 @@ export function AppSidebar({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {/* Admin Panel link for admin users only */}
+              {user && user.role === 'admin' && (
+                <SidebarMenuItem key={adminNavItem.title} className={cn("animate-fade-in", "group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0")}
+                  style={{animationDelay: `${navigationItems.length * 50}ms`}}>
+                  <SidebarMenuButton
+                    isActive={currentPage === adminNavItem.url}
+                    onClick={() => handleNavClick(adminNavItem.url)}
+                    className={cn(
+                      "sidebar-item focus-ring",
+                      currentPage === adminNavItem.url 
+                        ? "sidebar-item-active shadow-sm" 
+                        : "sidebar-item-inactive",
+                      "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
+                    )}
+                    tooltip={adminNavItem.title}
+                  >
+                    <adminNavItem.icon className="h-5 w-5 group-data-[collapsible=icon]:mx-auto" />
+                    <span className="font-medium group-data-[collapsible=icon]:hidden">{adminNavItem.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

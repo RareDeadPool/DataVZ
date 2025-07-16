@@ -2,6 +2,10 @@ const Project = require('../models/Project');
 const SharedProject = require('../models/SharedProject');
 const crypto = require('crypto');
 
+const ExcelData = require('../models/ExcelData');
+const Chart = require('../models/Chart');
+const User = require('../models/User');
+
 // Create a new project
 exports.createProject = async (req, res) => {
   try {
@@ -119,10 +123,6 @@ exports.deleteProject = async (req, res) => {
     }
     
     // Clean up related data
-    const Chart = require('../models/Chart');
-    const ExcelData = require('../models/ExcelData');
-    
-    // Delete all charts for this project
     const deletedCharts = await Chart.deleteMany({ projectId: projectId });
     console.log(`Deleted ${deletedCharts.deletedCount} charts for project ${projectId}`);
     
@@ -230,5 +230,46 @@ exports.acceptSharedProject = async (req, res) => {
   } catch (err) {
     console.error('Error in acceptSharedProject:', err);
     res.status(500).json({ error: 'Failed to accept shared project' });
+  }
+}; 
+
+// ANALYTICS: Platform summary for admin panel
+exports.getPlatformAnalyticsSummary = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden: Admins only.' });
+    }
+    // Totals
+    const [userCount, projectCount, excelCount, chartCount] = await Promise.all([
+      User.countDocuments({}),
+      require('../models/Project').countDocuments({}),
+      ExcelData.countDocuments({}),
+      Chart.countDocuments({}),
+    ]);
+    // Usage over time (last 30 days, daily)
+    const chartUsage = await Chart.aggregate([
+      { $match: { createdAt: { $gte: new Date(Date.now() - 30*24*60*60*1000) } } },
+      { $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+        count: { $sum: 1 }
+      }},
+      { $sort: { _id: 1 } }
+    ]);
+    // Most popular chart types (all time)
+    const popularTypes = await Chart.aggregate([
+      { $group: { _id: "$type", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+    res.json({
+      userCount,
+      projectCount,
+      excelCount,
+      chartCount,
+      chartUsage,
+      popularTypes
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
   }
 }; 

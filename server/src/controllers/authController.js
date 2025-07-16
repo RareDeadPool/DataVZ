@@ -146,4 +146,68 @@ exports.deleteAccount = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: 'Server error.' });
   }
+};
+
+// ADMIN: Get all users (with optional role/status filter)
+exports.getAllUsers = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden: Admins only.' });
+    }
+    const filter = {};
+    if (req.query.role) filter.role = req.query.role;
+    if (req.query.status) filter.status = req.query.status;
+    const users = await User.find(filter).select('-password');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// ADMIN: Update user role
+exports.updateUserRole = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden: Admins only.' });
+    }
+    const { userId, role } = req.body;
+    if (!userId || !role) return res.status(400).json({ message: 'userId and role required.' });
+    const user = await User.findByIdAndUpdate(userId, { role }, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// ADMIN: Update user status (activate/deactivate/block/unblock)
+exports.updateUserStatus = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden: Admins only.' });
+    }
+    const { userId, status } = req.body;
+    if (!userId || !status) return res.status(400).json({ message: 'userId and status required.' });
+    const user = await User.findByIdAndUpdate(userId, { status }, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// ANALYTICS: Get total user count (optionally by role/status)
+exports.getUserCount = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden: Admins only.' });
+    }
+    const match = {};
+    if (req.query.role) match.role = req.query.role;
+    if (req.query.status) match.status = req.query.status;
+    const count = await User.countDocuments(match);
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
+  }
 }; 

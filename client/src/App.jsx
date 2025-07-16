@@ -23,6 +23,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { login } from './store/slices/authSlice';
 import { Toaster } from 'sonner';
 import { Navigate, useLocation } from 'react-router-dom';
+import AdminDashboard from './components/features/AdminDashboard';
 
 function LandingPageWithAuthNav() {
   const navigate = useNavigate();
@@ -34,6 +35,15 @@ function PrivateRoute({ children }) {
   const location = useLocation();
   if (!user) {
     return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+  return children;
+}
+
+function AdminRoute({ children }) {
+  const user = useSelector(state => state.auth.user);
+  const location = useLocation();
+  if (!user || user.role !== 'admin') {
+    return <Navigate to={`/dashboard`} replace />;
   }
   return children;
 }
@@ -81,6 +91,7 @@ function App() {
           <Route path="/test-project" element={<PrivateRoute><MainLayout><ProjectCreationTest /></MainLayout></PrivateRoute>} />
           <Route path="/debug-project" element={<PrivateRoute><MainLayout><ProjectCreationDebug /></MainLayout></PrivateRoute>} />
           <Route path="/accept-project" element={<AcceptProject />} />
+          <Route path="/admin" element={<AdminRoute><MainLayout><AdminDashboard /></MainLayout></AdminRoute>} />
         </Routes>
       </Router>
       <Toaster 
