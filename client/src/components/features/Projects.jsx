@@ -84,10 +84,10 @@ export default function ProjectsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [projectForm, setProjectForm] = { name: '', description: '', category: '' };
-  const [editProjectForm, setEditProjectForm] = { name: '', description: '', category: '' };
-  const [localSelectedProject, setLocalSelectedProject] = null;
-  const [localError, setLocalError] = null;
+  const [projectForm, setProjectForm] = useState({ name: '', description: '', category: '' });
+  const [editProjectForm, setEditProjectForm] = useState({ name: '', description: '', category: '' });
+  const [localSelectedProject, setLocalSelectedProject] = useState(null);
+  const [localError, setLocalError] = useState(null);
 
   // AI Summary state
   const [showAISummary, setShowAISummary] = useState(false);
