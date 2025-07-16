@@ -1,11 +1,34 @@
-"use client"
-
 import React, { useEffect, useState } from "react"
-import { PanelTopIcon as Panel, Users, FileBarChart, Shield, Check, X, Ban, User as UserIcon, BarChart3, PieChart, BarChart2, AreaChart } from "lucide-react"
+import { 
+  PanelTopIcon as Panel, 
+  Users, 
+  FileBarChart, 
+  Shield, 
+  Check, 
+  X, 
+  Ban, 
+  User as UserIcon, 
+  BarChart3, 
+  PieChart, 
+  BarChart2, 
+  AreaChart,
+  Filter,
+  RefreshCw,
+  TrendingUp,
+  Activity,
+  Database,
+  FileText,
+  Crown,
+  UserCheck,
+  UserX,
+  Eye,
+  Settings
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -101,150 +124,432 @@ export default function AdminDashboard() {
     }
   };
 
-  return (
-    <section className="flex flex-col gap-6 p-2 sm:p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Admin Panel: User Management</h1>
-      <div className="flex flex-wrap gap-2 items-center mb-2">
-        <span>Filter:</span>
-        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="border rounded px-2 py-1">
-          <option value="">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="user">User</option>
-        </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border rounded px-2 py-1">
-          <option value="">All Statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="blocked">Blocked</option>
-        </select>
-        <Button size="sm" onClick={fetchUsers} disabled={loading}>Refresh</Button>
-      </div>
-      {error && <div className="text-red-500 mb-2">{error}</div>}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Signup Date</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow><TableCell colSpan={6}>Loading...</TableCell></TableRow>
-                ) : users.length === 0 ? (
-                  <TableRow><TableCell colSpan={6}>No users found.</TableCell></TableRow>
-                ) : users.map(user => (
-                  <TableRow key={user._id}>
-                    <TableCell className="flex items-center gap-2"><UserIcon className="h-4 w-4" />{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.role === 'admin' ? 'secondary' : 'outline'}>{user.role}</Badge>
-                      {user.role !== 'admin' && (
-                        <Button size="xs" variant="ghost" className="ml-2" disabled={actionLoading === user._id + "-role"} onClick={() => handleRoleChange(user._id, 'admin')}><Shield className="h-4 w-4" /> Make Admin</Button>
-                      )}
-                      {user.role === 'admin' && (
-                        <Button size="xs" variant="ghost" className="ml-2" disabled={actionLoading === user._id + "-role"} onClick={() => handleRoleChange(user._id, 'user')}><X className="h-4 w-4" /> Remove Admin</Button>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={user.status === 'active' ? 'default' : user.status === 'blocked' ? 'destructive' : 'outline'}>{user.status}</Badge>
-                    </TableCell>
-                    <TableCell>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}</TableCell>
-                    <TableCell className="flex gap-1">
-                      {user.status !== 'active' && (
-                        <Button size="xs" variant="outline" disabled={actionLoading === user._id + "-status"} onClick={() => handleStatusChange(user._id, 'active')}><Check className="h-4 w-4" /> Activate</Button>
-                      )}
-                      {user.status !== 'inactive' && (
-                        <Button size="xs" variant="outline" disabled={actionLoading === user._id + "-status"} onClick={() => handleStatusChange(user._id, 'inactive')}><Ban className="h-4 w-4" /> Deactivate</Button>
-                      )}
-                      {user.status !== 'blocked' && (
-                        <Button size="xs" variant="destructive" disabled={actionLoading === user._id + "-status"} onClick={() => handleStatusChange(user._id, 'blocked')}><X className="h-4 w-4" /> Block</Button>
-                      )}
-                      {user.status === 'blocked' && (
-                        <Button size="xs" variant="outline" disabled={actionLoading === user._id + "-status"} onClick={() => handleStatusChange(user._id, 'active')}><Check className="h-4 w-4" /> Unblock</Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+  const getStatusBadgeVariant = (status) => {
+    switch (status) {
+      case 'active': return 'default';
+      case 'blocked': return 'destructive';
+      default: return 'outline';
+    }
+  };
 
-      {/* Platform Analytics Section */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-2">Platform Analytics</h2>
-        {analyticsLoading ? (
-          <div>Loading analytics...</div>
-        ) : analyticsError ? (
-          <div className="text-red-500">{analyticsError}</div>
-        ) : analytics ? (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <Card><CardHeader><CardTitle>Total Users</CardTitle></CardHeader><CardContent><span className="text-2xl font-bold">{analytics.userCount}</span></CardContent></Card>
-              <Card><CardHeader><CardTitle>Total Projects</CardTitle></CardHeader><CardContent><span className="text-2xl font-bold">{analytics.projectCount}</span></CardContent></Card>
-              <Card><CardHeader><CardTitle>Excel Files Uploaded</CardTitle></CardHeader><CardContent><span className="text-2xl font-bold">{analytics.excelCount}</span></CardContent></Card>
-              <Card><CardHeader><CardTitle>Charts Generated</CardTitle></CardHeader><CardContent><span className="text-2xl font-bold">{analytics.chartCount}</span></CardContent></Card>
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'active': return UserCheck;
+      case 'blocked': return Ban;
+      default: return UserX;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Shield className="h-6 w-6 text-primary" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader><CardTitle>Usage Over Time (Last 30 Days)</CardTitle></CardHeader>
-                <CardContent>
-                  {analytics.chartUsage && analytics.chartUsage.length > 0 ? (
-                    <div className="w-full overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Charts Created</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {analytics.chartUsage.map(row => (
-                            <TableRow key={row._id}>
-                              <TableCell>{row._id}</TableCell>
-                              <TableCell>{row.count}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ) : <div>No chart activity in the last 30 days.</div>}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader><CardTitle>Most Popular Chart Types</CardTitle></CardHeader>
-                <CardContent>
-                  {analytics.popularTypes && analytics.popularTypes.length > 0 ? (
-                    <ul className="space-y-2">
-                      {analytics.popularTypes.map(type => {
-                        const Icon = chartTypeIcons[type._id?.toLowerCase()] || BarChart3;
-                        return (
-                          <li key={type._id} className="flex items-center gap-2">
-                            <Icon className="h-5 w-5 text-muted-foreground" />
-                            <span className="capitalize font-medium">{type._id || 'Other'}</span>
-                            <Badge variant="outline">{type.count}</Badge>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : <div>No chart data.</div>}
-                </CardContent>
-              </Card>
+            <div>
+              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+              <p className="text-sm text-muted-foreground">User management and platform analytics</p>
             </div>
-          </>
-        ) : null}
+          </div>
+        </div>
       </div>
-    </section>
+
+      <div className="container mx-auto px-6 py-6 space-y-8">
+        {/* Platform Analytics Overview */}
+        <section>
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Platform Analytics</h2>
+          </div>
+          
+          {analyticsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardContent className="p-6">
+                    <div className="h-16 bg-muted rounded"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : analyticsError ? (
+            <Card className="border-destructive/50">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-destructive">
+                  <X className="h-4 w-4" />
+                  <span>{analyticsError}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ) : analytics ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <Card className="border-l-4 border-l-primary">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Users</p>
+                        <p className="text-2xl font-bold">{analytics.userCount}</p>
+                      </div>
+                      <div className="p-3 bg-primary/10 rounded-full">
+                        <Users className="h-6 w-6 text-primary" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-l-4 border-l-blue-500">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Projects</p>
+                        <p className="text-2xl font-bold">{analytics.projectCount}</p>
+                      </div>
+                      <div className="p-3 bg-blue-100 rounded-full">
+                        <Database className="h-6 w-6 text-blue-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-l-4 border-l-green-500">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Excel Files</p>
+                        <p className="text-2xl font-bold">{analytics.excelCount}</p>
+                      </div>
+                      <div className="p-3 bg-green-100 rounded-full">
+                        <FileText className="h-6 w-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-l-4 border-l-purple-500">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Charts Generated</p>
+                        <p className="text-2xl font-bold">{analytics.chartCount}</p>
+                      </div>
+                      <div className="p-3 bg-purple-100 rounded-full">
+                        <BarChart3 className="h-6 w-6 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      Usage Over Time (Last 30 Days)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {analytics.chartUsage && analytics.chartUsage.length > 0 ? (
+                      <div className="w-full overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Date</TableHead>
+                              <TableHead className="text-right">Charts Created</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {analytics.chartUsage.map(row => (
+                              <TableRow key={row._id}>
+                                <TableCell className="font-medium">{row._id}</TableCell>
+                                <TableCell className="text-right">
+                                  <Badge variant="outline">{row.count}</Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Activity className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No chart activity in the last 30 days</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="h-5 w-5" />
+                      Popular Chart Types
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {analytics.popularTypes && analytics.popularTypes.length > 0 ? (
+                      <div className="space-y-3">
+                        {analytics.popularTypes.map(type => {
+                          const Icon = chartTypeIcons[type._id?.toLowerCase()] || BarChart3;
+                          return (
+                            <div key={type._id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-background rounded">
+                                  <Icon className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                                <span className="font-medium capitalize">{type._id || 'Other'}</span>
+                              </div>
+                              <Badge variant="secondary">{type.count}</Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <PieChart className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No chart data available</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          ) : null}
+        </section>
+
+        <Separator />
+
+        {/* User Management */}
+        <section>
+          <div className="flex items-center gap-2 mb-6">
+            <Users className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">User Management</h2>
+          </div>
+          
+          {/* Filters */}
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-4 items-center">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Filters:</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Role:</span>
+                  <select 
+                    value={roleFilter} 
+                    onChange={e => setRoleFilter(e.target.value)} 
+                    className="border rounded-md px-3 py-1 text-sm bg-background"
+                  >
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Status:</span>
+                  <select 
+                    value={statusFilter} 
+                    onChange={e => setStatusFilter(e.target.value)} 
+                    className="border rounded-md px-3 py-1 text-sm bg-background"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="blocked">Blocked</option>
+                  </select>
+                </div>
+                
+                <Button 
+                  size="sm" 
+                  onClick={fetchUsers} 
+                  disabled={loading}
+                  className="ml-auto"
+                >
+                  {loading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  Refresh
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {error && (
+            <Card className="border-destructive/50 mb-6">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-destructive">
+                  <X className="h-4 w-4" />
+                  <span>{error}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                All Users
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8">
+                          <div className="flex items-center justify-center gap-2">
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                            <span>Loading users...</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : users.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8">
+                          <div className="text-muted-foreground">
+                            <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p>No users found</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : users.map(user => {
+                      const StatusIcon = getStatusIcon(user.status);
+                      return (
+                        <TableRow key={user._id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-muted rounded-full">
+                                <UserIcon className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <div className="font-medium">{user.name}</div>
+                                <div className="text-sm text-muted-foreground">ID: {user._id.slice(-8)}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{user.email}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={user.role === 'admin' ? 'default' : 'outline'}>
+                                {user.role === 'admin' && <Crown className="h-3 w-3 mr-1" />}
+                                {user.role}
+                              </Badge>
+                              <div className="flex gap-1">
+                                {user.role !== 'admin' && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    disabled={actionLoading === user._id + "-role"} 
+                                    onClick={() => handleRoleChange(user._id, 'admin')}
+                                    className="h-8 px-2"
+                                  >
+                                    <Shield className="h-3 w-3" />
+                                  </Button>
+                                )}
+                                {user.role === 'admin' && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    disabled={actionLoading === user._id + "-role"} 
+                                    onClick={() => handleRoleChange(user._id, 'user')}
+                                    className="h-8 px-2"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <StatusIcon className="h-4 w-4" />
+                              <Badge variant={getStatusBadgeVariant(user.status)}>
+                                {user.status}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1 justify-end">
+                              {user.status !== 'active' && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  disabled={actionLoading === user._id + "-status"} 
+                                  onClick={() => handleStatusChange(user._id, 'active')}
+                                  className="h-8"
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                              )}
+                              {user.status !== 'inactive' && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  disabled={actionLoading === user._id + "-status"} 
+                                  onClick={() => handleStatusChange(user._id, 'inactive')}
+                                  className="h-8"
+                                >
+                                  <Ban className="h-3 w-3" />
+                                </Button>
+                              )}
+                              {user.status !== 'blocked' && (
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive" 
+                                  disabled={actionLoading === user._id + "-status"} 
+                                  onClick={() => handleStatusChange(user._id, 'blocked')}
+                                  className="h-8"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              )}
+                              {user.status === 'blocked' && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  disabled={actionLoading === user._id + "-status"} 
+                                  onClick={() => handleStatusChange(user._id, 'active')}
+                                  className="h-8"
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      </div>
+    </div>
   )
 }
