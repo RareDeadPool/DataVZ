@@ -143,42 +143,44 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Shield className="h-6 w-6 text-primary" />
+      <div className="border-b bg-card shadow-sm">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-foreground/5 rounded-xl border">
+              <Shield className="h-7 w-7 text-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-              <p className="text-sm text-muted-foreground">User management and platform analytics</p>
+              <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+              <p className="text-muted-foreground mt-1">Comprehensive user management and platform analytics</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-6 space-y-8">
+      <div className="container mx-auto px-6 py-8 space-y-12">
         {/* Platform Analytics Overview */}
         <section>
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Platform Analytics</h2>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 bg-foreground/5 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-foreground" />
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight">Platform Analytics</h2>
           </div>
           
           {analyticsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-6">
-                    <div className="h-16 bg-muted rounded"></div>
+                <Card key={i} className="animate-pulse border-0 shadow-md">
+                  <CardContent className="p-8">
+                    <div className="h-20 bg-muted rounded-lg"></div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : analyticsError ? (
-            <Card className="border-destructive/50">
+            <Card className="border-0 shadow-md bg-muted/30">
               <CardContent className="p-6">
-                <div className="flex items-center gap-2 text-destructive">
+                <div className="flex items-center gap-2 text-foreground">
                   <X className="h-4 w-4" />
                   <span>{analyticsError}</span>
                 </div>
@@ -186,58 +188,58 @@ export default function AdminDashboard() {
             </Card>
           ) : analytics ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <Card className="border-l-4 border-l-primary">
-                  <CardContent className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
+                  <CardContent className="p-8">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Users</p>
-                        <p className="text-2xl font-bold">{analytics.userCount}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Total Users</p>
+                        <p className="text-3xl font-bold tracking-tight">{analytics.userCount}</p>
                       </div>
-                      <div className="p-3 bg-primary/10 rounded-full">
-                        <Users className="h-6 w-6 text-primary" />
+                      <div className="p-4 bg-foreground/5 rounded-2xl">
+                        <Users className="h-8 w-8 text-foreground" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
                 
-                <Card className="border-l-4 border-l-blue-500">
-                  <CardContent className="p-6">
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
+                  <CardContent className="p-8">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Projects</p>
-                        <p className="text-2xl font-bold">{analytics.projectCount}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Total Projects</p>
+                        <p className="text-3xl font-bold tracking-tight">{analytics.projectCount}</p>
                       </div>
-                      <div className="p-3 bg-blue-100 rounded-full">
-                        <Database className="h-6 w-6 text-blue-600" />
+                      <div className="p-4 bg-foreground/5 rounded-2xl">
+                        <Database className="h-8 w-8 text-foreground" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
                 
-                <Card className="border-l-4 border-l-green-500">
-                  <CardContent className="p-6">
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
+                  <CardContent className="p-8">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Excel Files</p>
-                        <p className="text-2xl font-bold">{analytics.excelCount}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Excel Files</p>
+                        <p className="text-3xl font-bold tracking-tight">{analytics.excelCount}</p>
                       </div>
-                      <div className="p-3 bg-green-100 rounded-full">
-                        <FileText className="h-6 w-6 text-green-600" />
+                      <div className="p-4 bg-foreground/5 rounded-2xl">
+                        <FileText className="h-8 w-8 text-foreground" />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
                 
-                <Card className="border-l-4 border-l-purple-500">
-                  <CardContent className="p-6">
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
+                  <CardContent className="p-8">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Charts Generated</p>
-                        <p className="text-2xl font-bold">{analytics.chartCount}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Charts Generated</p>
+                        <p className="text-3xl font-bold tracking-tight">{analytics.chartCount}</p>
                       </div>
-                      <div className="p-3 bg-purple-100 rounded-full">
-                        <BarChart3 className="h-6 w-6 text-purple-600" />
+                      <div className="p-4 bg-foreground/5 rounded-2xl">
+                        <BarChart3 className="h-8 w-8 text-foreground" />
                       </div>
                     </div>
                   </CardContent>
@@ -245,11 +247,13 @@ export default function AdminDashboard() {
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Activity className="h-5 w-5" />
-                      Usage Over Time (Last 30 Days)
+                <Card className="border-0 shadow-lg">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2 bg-foreground/5 rounded-lg">
+                        <Activity className="h-5 w-5 text-foreground" />
+                      </div>
+                      <span className="text-lg">Usage Trends</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -258,16 +262,16 @@ export default function AdminDashboard() {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Date</TableHead>
-                              <TableHead className="text-right">Charts Created</TableHead>
+                              <TableHead className="font-semibold">Date</TableHead>
+                              <TableHead className="text-right font-semibold">Charts Created</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {analytics.chartUsage.map(row => (
-                              <TableRow key={row._id}>
+                              <TableRow key={row._id} className="hover:bg-muted/30">
                                 <TableCell className="font-medium">{row._id}</TableCell>
                                 <TableCell className="text-right">
-                                  <Badge variant="outline">{row.count}</Badge>
+                                  <Badge variant="outline" className="font-mono">{row.count}</Badge>
                                 </TableCell>
                               </TableRow>
                             ))}
@@ -275,43 +279,51 @@ export default function AdminDashboard() {
                         </Table>
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Activity className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No chart activity in the last 30 days</p>
+                      <div className="text-center py-12 text-muted-foreground">
+                        <div className="p-4 bg-muted/20 rounded-full w-fit mx-auto mb-4">
+                          <Activity className="h-12 w-12 opacity-40" />
+                        </div>
+                        <p className="text-lg font-medium">No Recent Activity</p>
+                        <p className="text-sm">No charts created in the last 30 days</p>
                       </div>
                     )}
                   </CardContent>
                 </Card>
                 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <PieChart className="h-5 w-5" />
-                      Popular Chart Types
+                <Card className="border-0 shadow-lg">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2 bg-foreground/5 rounded-lg">
+                        <PieChart className="h-5 w-5 text-foreground" />
+                      </div>
+                      <span className="text-lg">Chart Types</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {analytics.popularTypes && analytics.popularTypes.length > 0 ? (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {analytics.popularTypes.map(type => {
                           const Icon = chartTypeIcons[type._id?.toLowerCase()] || BarChart3;
                           return (
-                            <div key={type._id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-background rounded">
-                                  <Icon className="h-4 w-4 text-muted-foreground" />
+                            <div key={type._id} className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-muted/30 to-muted/10 hover:from-muted/40 hover:to-muted/20 transition-all duration-200">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-background rounded-xl shadow-sm">
+                                  <Icon className="h-5 w-5 text-muted-foreground" />
                                 </div>
-                                <span className="font-medium capitalize">{type._id || 'Other'}</span>
+                                <span className="font-semibold capitalize text-lg">{type._id || 'Other'}</span>
                               </div>
-                              <Badge variant="secondary">{type.count}</Badge>
+                              <Badge variant="secondary" className="text-sm px-3 py-1 font-mono">{type.count}</Badge>
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <PieChart className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No chart data available</p>
+                      <div className="text-center py-12 text-muted-foreground">
+                        <div className="p-4 bg-muted/20 rounded-full w-fit mx-auto mb-4">
+                          <PieChart className="h-12 w-12 opacity-40" />
+                        </div>
+                        <p className="text-lg font-medium">No Chart Data</p>
+                        <p className="text-sm">No charts have been created yet</p>
                       </div>
                     )}
                   </CardContent>
@@ -321,30 +333,34 @@ export default function AdminDashboard() {
           ) : null}
         </section>
 
-        <Separator />
+        <div className="border-t border-border/50"></div>
 
         {/* User Management */}
         <section>
-          <div className="flex items-center gap-2 mb-6">
-            <Users className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">User Management</h2>
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 bg-foreground/5 rounded-lg">
+              <Users className="h-5 w-5 text-foreground" />
+            </div>
+            <h2 className="text-2xl font-semibold tracking-tight">User Management</h2>
           </div>
           
           {/* Filters */}
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-wrap gap-4 items-center">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Filters:</span>
+          <Card className="mb-6 border-0 shadow-md">
+            <CardContent className="p-6">
+              <div className="flex flex-wrap gap-6 items-center">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-foreground/5 rounded-lg">
+                    <Filter className="h-4 w-4 text-foreground" />
+                  </div>
+                  <span className="font-semibold">Filters</span>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Role:</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-muted-foreground">Role:</span>
                   <select 
                     value={roleFilter} 
                     onChange={e => setRoleFilter(e.target.value)} 
-                    className="border rounded-md px-3 py-1 text-sm bg-background"
+                    className="border border-border rounded-lg px-4 py-2 text-sm bg-background focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
                   >
                     <option value="">All Roles</option>
                     <option value="admin">Admin</option>
@@ -352,12 +368,12 @@ export default function AdminDashboard() {
                   </select>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Status:</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-muted-foreground">Status:</span>
                   <select 
                     value={statusFilter} 
                     onChange={e => setStatusFilter(e.target.value)} 
-                    className="border rounded-md px-3 py-1 text-sm bg-background"
+                    className="border border-border rounded-lg px-4 py-2 text-sm bg-background focus:ring-2 focus:ring-ring focus:border-transparent outline-none transition-all"
                   >
                     <option value="">All Statuses</option>
                     <option value="active">Active</option>
@@ -370,12 +386,12 @@ export default function AdminDashboard() {
                   size="sm" 
                   onClick={fetchUsers} 
                   disabled={loading}
-                  className="ml-auto"
+                  className="ml-auto px-6"
                 >
                   {loading ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <RefreshCw className="h-4 w-4 animate-spin mr-2" />
                   ) : (
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw className="h-4 w-4 mr-2" />
                   )}
                   Refresh
                 </Button>
@@ -384,75 +400,80 @@ export default function AdminDashboard() {
           </Card>
 
           {error && (
-            <Card className="border-destructive/50 mb-6">
+            <Card className="border-destructive/50 mb-6 bg-destructive/5">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 text-destructive">
                   <X className="h-4 w-4" />
-                  <span>{error}</span>
+                  <span className="font-medium">{error}</span>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                All Users
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3">
+                <div className="p-2 bg-foreground/5 rounded-lg">
+                  <Eye className="h-5 w-5 text-foreground" />
+                </div>
+                <span className="text-lg">User Directory</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                    <TableRow className="border-border/50">
+                      <TableHead className="font-semibold text-foreground">User</TableHead>
+                      <TableHead className="font-semibold text-foreground">Email</TableHead>
+                      <TableHead className="font-semibold text-foreground">Role</TableHead>
+                      <TableHead className="font-semibold text-foreground">Status</TableHead>
+                      <TableHead className="font-semibold text-foreground">Joined</TableHead>
+                      <TableHead className="text-right font-semibold text-foreground">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
-                          <div className="flex items-center justify-center gap-2">
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                            <span>Loading users...</span>
+                        <TableCell colSpan={6} className="text-center py-12">
+                          <div className="flex items-center justify-center gap-3">
+                            <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+                            <span className="text-muted-foreground font-medium">Loading users...</span>
                           </div>
                         </TableCell>
                       </TableRow>
                     ) : users.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
+                        <TableCell colSpan={6} className="text-center py-12">
                           <div className="text-muted-foreground">
-                            <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                            <p>No users found</p>
+                            <div className="p-4 bg-muted/20 rounded-full w-fit mx-auto mb-4">
+                              <Users className="h-12 w-12 opacity-40" />
+                            </div>
+                            <p className="text-lg font-medium">No Users Found</p>
+                            <p className="text-sm">Try adjusting your filters</p>
                           </div>
                         </TableCell>
                       </TableRow>
                     ) : users.map(user => {
                       const StatusIcon = getStatusIcon(user.status);
                       return (
-                        <TableRow key={user._id}>
+                        <TableRow key={user._id} className="hover:bg-muted/20 transition-colors">
                           <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-muted rounded-full">
-                                <UserIcon className="h-4 w-4" />
+                            <div className="flex items-center gap-4">
+                              <div className="p-3 bg-muted/50 rounded-full">
+                                <UserIcon className="h-5 w-5 text-muted-foreground" />
                               </div>
                               <div>
-                                <div className="font-medium">{user.name}</div>
-                                <div className="text-sm text-muted-foreground">ID: {user._id.slice(-8)}</div>
+                                <div className="font-semibold text-foreground">{user.name}</div>
+                                <div className="text-sm text-muted-foreground font-mono">ID: {user._id.slice(-8)}</div>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{user.email}</TableCell>
+                          <TableCell className="font-mono text-sm text-muted-foreground">{user.email}</TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={user.role === 'admin' ? 'default' : 'outline'}>
-                                {user.role === 'admin' && <Crown className="h-3 w-3 mr-1" />}
+                            <div className="flex items-center gap-3">
+                              <Badge variant={user.role === 'admin' ? 'default' : 'outline'} className="px-3 py-1">
+                                {user.role === 'admin' && <Crown className="h-3 w-3 mr-2" />}
                                 {user.role}
                               </Badge>
                               <div className="flex gap-1">
@@ -462,9 +483,10 @@ export default function AdminDashboard() {
                                     variant="ghost" 
                                     disabled={actionLoading === user._id + "-role"} 
                                     onClick={() => handleRoleChange(user._id, 'admin')}
-                                    className="h-8 px-2"
+                                    className="h-8 w-8 p-0 hover:bg-muted/50"
+                                    title="Promote to Admin"
                                   >
-                                    <Shield className="h-3 w-3" />
+                                    <Shield className="h-4 w-4" />
                                   </Button>
                                 )}
                                 {user.role === 'admin' && (
@@ -473,18 +495,19 @@ export default function AdminDashboard() {
                                     variant="ghost" 
                                     disabled={actionLoading === user._id + "-role"} 
                                     onClick={() => handleRoleChange(user._id, 'user')}
-                                    className="h-8 px-2"
+                                    className="h-8 w-8 p-0 hover:bg-muted/50"
+                                    title="Remove Admin"
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-4 w-4" />
                                   </Button>
                                 )}
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                               <StatusIcon className="h-4 w-4" />
-                              <Badge variant={getStatusBadgeVariant(user.status)}>
+                              <Badge variant={getStatusBadgeVariant(user.status)} className="px-3 py-1">
                                 {user.status}
                               </Badge>
                             </div>
@@ -493,14 +516,14 @@ export default function AdminDashboard() {
                             {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-1 justify-end">
+                            <div className="flex gap-2 justify-end">
                               {user.status !== 'active' && (
                                 <Button 
                                   size="sm" 
                                   variant="outline" 
                                   disabled={actionLoading === user._id + "-status"} 
                                   onClick={() => handleStatusChange(user._id, 'active')}
-                                  className="h-8"
+                                  className="h-8 px-3"
                                 >
                                   <Check className="h-3 w-3" />
                                 </Button>
@@ -511,7 +534,7 @@ export default function AdminDashboard() {
                                   variant="outline" 
                                   disabled={actionLoading === user._id + "-status"} 
                                   onClick={() => handleStatusChange(user._id, 'inactive')}
-                                  className="h-8"
+                                  className="h-8 px-3"
                                 >
                                   <Ban className="h-3 w-3" />
                                 </Button>
@@ -522,7 +545,7 @@ export default function AdminDashboard() {
                                   variant="destructive" 
                                   disabled={actionLoading === user._id + "-status"} 
                                   onClick={() => handleStatusChange(user._id, 'blocked')}
-                                  className="h-8"
+                                  className="h-8 px-3"
                                 >
                                   <X className="h-3 w-3" />
                                 </Button>
@@ -533,7 +556,7 @@ export default function AdminDashboard() {
                                   variant="outline" 
                                   disabled={actionLoading === user._id + "-status"} 
                                   onClick={() => handleStatusChange(user._id, 'active')}
-                                  className="h-8"
+                                  className="h-8 px-3"
                                 >
                                   <Check className="h-3 w-3" />
                                 </Button>
