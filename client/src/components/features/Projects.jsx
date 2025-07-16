@@ -4,9 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import { 
   Plus, 
   Search, 
@@ -27,7 +24,7 @@ import {
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '../components/ui/tooltip';
 
 // Redux actions
@@ -40,37 +37,7 @@ import {
   clearCreateError,
   clearUpdateError,
   clearDeleteError,
-} from './/store/slices/projectsSlice';
-
-// Use the correct relative import for services/api
-import { askGeminiSummary } from '../../services/api';
-
-const templates = [
-  {
-    name: "Sales Dashboard",
-    description: "Track sales performance and revenue metrics",
-    category: "Sales",
-    charts: ["Bar Chart", "Line Chart", "KPI Cards"],
-  },
-  {
-    name: "Marketing Analytics",
-    description: "Monitor marketing campaigns and ROI",
-    category: "Marketing",
-    charts: ["Funnel Chart", "Pie Chart", "Trend Analysis"],
-  },
-  {
-    name: "Financial Report",
-    description: "Comprehensive financial analysis and reporting",
-    category: "Finance",
-    charts: ["Waterfall Chart", "Budget vs Actual", "Cash Flow"],
-  },
-  {
-    name: "Customer Analysis",
-    description: "Customer behavior and segmentation insights",
-    category: "Customer",
-    charts: ["Cohort Analysis", "Retention Chart", "Segmentation"],
-  },
-];
+} from '../../store/slices/projectsSlice';
 
 export default function ProjectsPage() {
   const dispatch = useDispatch();
