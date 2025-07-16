@@ -76,6 +76,9 @@ export default function MainLayout({ children }) {
       case 'vizard':
         navigate('/vizard');
         break;
+      case 'admin':
+        navigate('/admin');
+        break;
       default:
         navigate('/dashboard');
     }
