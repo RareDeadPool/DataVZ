@@ -61,7 +61,7 @@ export default function ProjectsPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const {
-    projects,
+    projects = [],
     selectedProject,
     loading,
     error,
@@ -71,7 +71,7 @@ export default function ProjectsPage() {
     updateError,
     deleteLoading,
     deleteError,
-  } = useSelector(state => state.projects);
+  } = useSelector(state => state.projects || {});
   
   const user = useSelector(state => state.auth.user);
 
