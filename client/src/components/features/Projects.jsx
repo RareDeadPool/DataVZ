@@ -40,7 +40,7 @@ import {
   clearCreateError,
   clearUpdateError,
   clearDeleteError,
-} from '../store/slices/projectsSlice';
+} from '@/store/slices/projectsSlice';
 
 import { shareProject } from '../services/api';
 import { askGeminiSummary } from '../services/api';
