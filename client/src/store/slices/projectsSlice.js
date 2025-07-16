@@ -7,7 +7,7 @@ export const fetchProjects = createAsyncThunk(
   'projects/fetchProjects',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found. Please log in again.');
       }
@@ -37,7 +37,7 @@ export const createProject = createAsyncThunk(
   'projects/createProject',
   async (projectData, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found. Please log in again.');
       }
@@ -73,7 +73,7 @@ export const updateProject = createAsyncThunk(
   'projects/updateProject',
   async ({ projectId, updates }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/${projectId}`, {
         method: 'PUT',
         headers: {
@@ -95,7 +95,7 @@ export const deleteProject = createAsyncThunk(
   'projects/deleteProject',
   async (projectId, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/${projectId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -113,7 +113,7 @@ export const addCollaborator = createAsyncThunk(
   'projects/addCollaborator',
   async ({ projectId, email, role = 'editor' }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/${projectId}/collaborators`, {
         method: 'POST',
         headers: {
@@ -135,7 +135,7 @@ export const removeCollaborator = createAsyncThunk(
   'projects/removeCollaborator',
   async ({ projectId, userId }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/${projectId}/collaborators/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -153,7 +153,7 @@ export const changeCollaboratorRole = createAsyncThunk(
   'projects/changeCollaboratorRole',
   async ({ projectId, userId, role }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/${projectId}/collaborators/${userId}/role`, {
         method: 'PUT',
         headers: {
@@ -175,7 +175,7 @@ export const leaveProject = createAsyncThunk(
   'projects/leaveProject',
   async (projectId, { rejectWithValue, getState }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const user = getState().auth.user;
       const response = await fetch(`${API_BASE}/projects/${projectId}/leave`, {
         method: 'POST',
@@ -198,7 +198,7 @@ export const addTeamToProject = createAsyncThunk(
   'projects/addTeamToProject',
   async ({ projectId, teamId, role = 'editor' }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/${projectId}/teams`, {
         method: 'POST',
         headers: {
@@ -220,7 +220,7 @@ export const removeTeamFromProject = createAsyncThunk(
   'projects/removeTeamFromProject',
   async ({ projectId, teamId }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/${projectId}/teams/${teamId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -239,7 +239,7 @@ export const inviteCollaborator = createAsyncThunk(
   'projects/inviteCollaborator',
   async ({ projectId, email, role = 'editor' }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/${projectId}/invite-collaborator`, {
         method: 'POST',
         headers: {
@@ -261,7 +261,7 @@ export const respondToCollaborationInvitation = createAsyncThunk(
   'projects/respondToCollaborationInvitation',
   async ({ projectId, status }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/collaboration-invitation/respond`, {
         method: 'POST',
         headers: {
@@ -283,7 +283,7 @@ export const fetchPendingCollaborationInvitations = createAsyncThunk(
   'projects/fetchPendingCollaborationInvitations',
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       const response = await fetch(`${API_BASE}/projects/collaboration-invitations/pending`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
