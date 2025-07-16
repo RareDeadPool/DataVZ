@@ -52,7 +52,7 @@ function App() {
   const dispatch = useDispatch();
   React.useEffect(() => {
     const fetchProfile = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) return;
       try {
         const res = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000/api') + '/auth/profile', {

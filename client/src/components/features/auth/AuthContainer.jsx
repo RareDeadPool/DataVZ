@@ -48,6 +48,7 @@ export default function AuthContainer() {
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  const [rememberMe, setRememberMe] = useState(true);
 
   const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
 
@@ -128,6 +129,14 @@ export default function AuthContainer() {
             navigate('/dashboard');
           }
         }, 1000);
+        // Store token in correct storage
+        if (rememberMe) {
+          localStorage.setItem('token', token);
+          sessionStorage.removeItem('token');
+        } else {
+          sessionStorage.setItem('token', token);
+          localStorage.removeItem('token');
+        }
       } else {
         setSuccess('Account created successfully! Please check your email to verify your account.');
         setTimeout(() => {
@@ -398,14 +407,15 @@ export default function AuthContainer() {
                   )}
 
                   {isLogin && (
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center space-x-2 text-sm">
-                        <input type="checkbox" className="rounded border-border w-4 h-4" />
-                        <span className="text-muted-foreground">Remember me</span>
-                      </label>
-                      <a href="/request-password-reset" className="text-sm text-primary hover:underline font-medium">
-                        Forgot password?
-                      </a>
+                    <div className="flex items-center gap-2 mb-4">
+                      <input
+                        type="checkbox"
+                        id="rememberMe"
+                        checked={rememberMe}
+                        onChange={e => setRememberMe(e.target.checked)}
+                        className="accent-blue-600"
+                      />
+                      <label htmlFor="rememberMe" className="text-sm text-muted-foreground">Remember Me</label>
                     </div>
                   )}
 
