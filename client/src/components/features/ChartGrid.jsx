@@ -78,7 +78,11 @@ export function ChartGrid({ charts, onEditChart, onDeleteChart }) {
             </CardHeader>
             <CardContent>
               <div className="h-32 bg-slate-50 rounded-lg flex items-center justify-center mb-3">
-                {chart.data && chart.xKey && chart.yKey ? (
+                {chart.data && (
+                  (["pie", "doughnut", "polar"].includes(chart.type) && chart.yKey) ||
+                  (["bar", "line", "area", "horizontalBar", "scatter", "bubble", "3d", "3dPie", "3dScatter"].includes(chart.type) && chart.xKey && chart.yKey) ||
+                  (chart.type === "radar" && chart.yKey)
+                ) ? (
                   <ChartRenderer
                     type={chart.type}
                     data={chart.data}
