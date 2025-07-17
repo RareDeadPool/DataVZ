@@ -467,6 +467,28 @@ const Index = () => {
               </Card>
             </div>
 
+            {/* Chart Previews */}
+            {charts && charts.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Chart Previews</h3>
+                <ChartGrid 
+                  charts={charts.slice(0, 3)} // Show first 3 charts as preview
+                  onEditChart={(chart) => {
+                    setEditingChart(chart);
+                    setShowChartModal(true);
+                  }}
+                  onDeleteChart={(chartId) => {
+                    handleDeleteChart(chartId);
+                  }}
+                />
+                {charts.length > 3 && (
+                  <Button variant="outline" className="mt-4" onClick={() => setActiveTab('charts')}>
+                    View All Charts
+                  </Button>
+                )}
+              </div>
+            )}
+
             {/* Quick Actions */}
             <Card>
               <CardHeader>
